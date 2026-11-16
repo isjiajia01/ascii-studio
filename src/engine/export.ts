@@ -1,4 +1,3 @@
-import { Muxer, ArrayBufferTarget } from 'mp4-muxer';
 import { Renderer, fitSize, type SourceEl } from './renderer';
 import type { Params } from './styles';
 
@@ -54,7 +53,7 @@ export async function exportVideo(video: HTMLVideoElement, p: Params, longEdge: 
   const was = !video.paused, originalTime = video.currentTime;
 
   const base = { width: w, height: h, framerate: fps, bitrate: Math.round(w * h * fps * 0.1) };
-  const codecs = ['avc1.640034', 'avc1.64002A', 'avc1.4d0034', 'avc1.42001f'];
+  const codecs = ['avc1.640034', 'avc1.64002A', 'avc1.42001f'];
   let cfg: VideoEncoderConfig | null = null;
   for (const codec of codecs) {
     const c = { ...base, codec };
@@ -62,14 +61,59 @@ export async function exportVideo(video: HTMLVideoElement, p: Params, longEdge: 
   }
   if (!cfg) throw new Error('No H.264 encoder available at ' + w + 'x' + h + '. Try a smaller size.');
 
-  const muxer = new Muxer({ target: new ArrayBufferTarget(), video: { codec: 'avc', width: w, height: h }, fastStart: 'in-memory' });
   let err: unknown = null;
-  const enc = new VideoEncoder({ output: (chunk, meta) => muxer.addVideoChunk(chunk, meta), error: e => { err = e; } });
+  const check = () => {
+    if (signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+    if (err) throw err;
+  };
+  // Bound waits for encoder flush and muxer work, as well as the frame queue.
+  const wait = async <T>(work: () => Promise<T>): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let aborted: () => void = () => {};
+    try {
+      check();
+      const result = await Promise.race([work(), new Promise<never>((_, reject) => {
+        aborted = () => reject(new DOMException('Cancelled', 'AbortError'));
+        signal.addEventListener('abort', aborted, { once: true });
+        if (signal.aborted) aborted();
+        timer = setTimeout(() => reject(new Error('Video encoder stalled. Try a smaller output size.')), 30000);
+      })]);
+      check();
+      return result;
+    } finally {
+      clearTimeout(timer); signal.removeEventListener('abort', aborted);
+    }
+  };
+
+  // Load the muxer only when MP4 export is requested.
+  const { Output, Mp4OutputFormat, BufferTarget, EncodedVideoPacketSource, EncodedPacket } = await wait(() => import('mediabunny').then(
+    ({ Output, Mp4OutputFormat, BufferTarget, EncodedVideoPacketSource, EncodedPacket }) =>
+      ({ Output, Mp4OutputFormat, BufferTarget, EncodedVideoPacketSource, EncodedPacket })));
+  const target = new BufferTarget();
+  const output = new Output({ target, format: new Mp4OutputFormat({ fastStart: 'in-memory' }) });
+  const source = new EncodedVideoPacketSource('avc');
+  output.addVideoTrack(source, { frameRate: fps });
+  let pendingPackets = 0;
+  let packets: Promise<void> = Promise.resolve();
+  // Keep our encoder ownership so abort can close it even during flush.
+  const enc = new VideoEncoder({
+    output: (chunk, meta) => {
+      if (err || signal.aborted) return;
+      try {
+        const packet = EncodedPacket.fromEncodedChunk(chunk);
+        pendingPackets++;
+        packets = packets.then(async () => {
+          if (!err && !signal.aborted) await source.add(packet, meta);
+        }).catch(e => { err = e; }).finally(() => { pendingPackets--; });
+      } catch (e) { err = e; }
+    },
+    error: e => { err = e; },
+  });
   let r: Renderer | null = null;
   const pp = { ...p, transparent: false };
   try {
     if (signal.aborted) throw new DOMException('Cancelled', 'AbortError');
-    video.pause(); enc.configure(cfg);
+    video.pause(); await wait(() => output.start()); enc.configure(cfg);
     r = new Renderer(); r.setSource(video, sw, sh);
     for (let i = 0; i < frames; i++) {
       if (signal.aborted) throw new DOMException('Cancelled', 'AbortError');
@@ -82,7 +126,7 @@ export async function exportVideo(video: HTMLVideoElement, p: Params, longEdge: 
       try { enc.encode(f, { keyFrame: i % 60 === 0 }); } finally { f.close(); }
       const queuedAt = performance.now();
       // At 4K each queued raw frame can retain tens of MB.
-      while (enc.encodeQueueSize > 2) {
+      while (enc.encodeQueueSize > 2 || pendingPackets > 2) {
         if (err) throw err;
         if (signal.aborted) throw new DOMException('Cancelled', 'AbortError');
         if (performance.now() - queuedAt > 30000) throw new Error('Video encoder stalled. Try a smaller output size.');
@@ -90,15 +134,16 @@ export async function exportVideo(video: HTMLVideoElement, p: Params, longEdge: 
       }
       if (i % 3 === 0) { onProgress((i + 1) / frames); await new Promise(res => setTimeout(res, 0)); }
     }
-    await enc.flush();
-    if (err) throw err;
-    if (signal.aborted) throw new DOMException('Cancelled', 'AbortError');
-    muxer.finalize();
+    await wait(() => enc.flush());
+    await wait(() => packets);
+    await wait(() => output.finalize());
     onProgress(1);
-    return new Blob([muxer.target.buffer], { type: 'video/mp4' });
+    return new Blob([target.buffer!], { type: 'video/mp4' });
   } finally {
     try { enc.close(); } catch { /* closed */ }
     r?.dispose();
+    // Packet sources have no internal encoder to flush during cancellation.
+    try { if (output.state !== 'finalized') await output.cancel(); } catch { /* cleanup must not prevent restoring the source */ }
     try { await seek(video, originalTime); } catch { /* source may have been removed */ }
     if (was) void video.play().catch(() => { /* browser may require another gesture */ });
   }

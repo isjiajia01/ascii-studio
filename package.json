@@ -13,6 +13,6 @@
     "vite": "*"
   },
   "dependencies": {
-    "mp4-muxer": "*"
+    "mediabunny": "1.66.0"
   }
 }
