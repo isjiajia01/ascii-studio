@@ -9,7 +9,7 @@ if (!matchMedia('(prefers-reduced-motion:reduce)').matches) {
       let n = 0;
       for (const e of es) {
         if (!e.isIntersecting) continue;
-        (e.target as HTMLElement).style.setProperty('--d', Math.min(n++ * 90, 450) + 'ms');
+        (e.target as HTMLElement).style.setProperty('--d', Math.min(n++ * 70, 350) + 'ms');
         e.target.classList.add('in'); io.unobserve(e.target);
       }
     }, { rootMargin: '0px 0px -8% 0px', threshold: 0.05 });
