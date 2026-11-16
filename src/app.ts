@@ -24,35 +24,56 @@ const isLive = () => !!src && ((src.kind === 'video' && !(src.el as HTMLVideoEle
 /* ---------- panel ---------- */
 type Ctl = () => void;
 const refreshers: Ctl[] = [];
-function sec(title: string, extra = ''): HTMLElement {
-  const s = document.createElement('div'); s.className = 'sec ' + extra; s.innerHTML = '<h3>' + title + '</h3>'; panel.appendChild(s); return s;
+const metaRefreshers: Ctl[] = []; // slug + 'n on' badges; safe to run while a control is being edited
+/** A collapsible control group. `fx` lists effect keys; the summary shows how many are on while it is closed. */
+function sec(title: string, open = true, fx: (keyof Params)[] = []): HTMLElement {
+  const d = document.createElement('details'); d.className = 'grp'; d.open = open;
+  d.innerHTML = '<summary><span></span><span class="mod"></span></summary><div class="grp-body"></div>';
+  d.querySelector('summary span')!.textContent = title;
+  panel.appendChild(d);
+  if (fx.length) {
+    const mod = d.querySelector<HTMLElement>('.mod')!;
+    metaRefreshers.push(() => {
+      const n = fx.filter(k => p[k] !== DEFAULTS[k]).length;
+      d.classList.toggle('is-mod', n > 0); mod.textContent = n + ' on';
+    });
+  }
+  return d.querySelector<HTMLElement>('.grp-body')!;
 }
 function slider(parent: HTMLElement, key: keyof Params, label: string, min: number, max: number, step: number, fmt = (v: number) => String(Math.round(v * 100) / 100)) {
   const w = document.createElement('label'); w.className = 'ctl';
   w.innerHTML = '<span>' + label + '</span><input type="range" min="' + min + '" max="' + max + '" step="' + step + '"><output></output>';
   const i = w.querySelector('input')!, o = w.querySelector('output')!;
-  const sync = () => { i.value = String(p[key]); o.textContent = fmt(p[key] as number); };
-  i.oninput = () => { (p as any)[key] = parseFloat(i.value); o.textContent = fmt(p[key] as number); touched(); };
+  const fill = () => i.style.setProperty('--v', ((parseFloat(i.value) - min) / (max - min) * 100) + '%');
+  const sync = () => { i.value = String(p[key]); o.textContent = fmt(p[key] as number); fill(); };
+  i.oninput = () => { (p as any)[key] = parseFloat(i.value); o.textContent = fmt(p[key] as number); fill(); touched(); };
   refreshers.push(sync); parent.appendChild(w); return w;
 }
 function toggle(parent: HTMLElement, key: keyof Params, label: string) {
   const w = document.createElement('label'); w.className = 'ctl sw';
-  w.innerHTML = '<span>' + label + '</span><input type="checkbox">';
+  w.innerHTML = '<span>' + label + '</span><input type="checkbox" class="switch">';
   const i = w.querySelector('input')!;
   i.onchange = () => { (p as any)[key] = i.checked; touched(); };
   refreshers.push(() => { i.checked = !!p[key]; }); parent.appendChild(w);
 }
-function touched() { activePreset = null; syncPresetUI(); markDirty(); }
+function touched() { activePreset = null; syncPresetUI(); markDirty(); metaRefreshers.forEach(f => f()); }
 
+const GLYPHS: Record<string, string> = {
+  classic: '@%#*', detailed: '$8&o', blocks: '▓▒░', letters: 'AbC', sparse: '+:.', binary: '101', braille: '⣿⣶⣤',
+  dots: '●•·', dither: '▚▞▚', bricks: '▣▣▣', custom: 'Aa+.', particles: '·•·', film: '◐◑', drift: '▞▖▝',
+};
 const sStyle = sec('Style');
-const styleGrid = document.createElement('div'); styleGrid.className = 'styles'; sStyle.appendChild(styleGrid);
+const styleGrid = document.createElement('div'); styleGrid.className = 'styles'; styleGrid.setAttribute('role', 'group'); styleGrid.setAttribute('aria-label', 'Style'); sStyle.appendChild(styleGrid);
 const styleBtns = STYLE_ORDER.map(id => {
-  const b = document.createElement('button'); b.className = 'pill'; b.textContent = STYLES[id].name;
+  const b = document.createElement('button'); b.className = 'style';
+  b.innerHTML = '<span class="gl" aria-hidden="true"></span><span></span>';
+  b.querySelector('.gl')!.textContent = GLYPHS[id] || '';
+  (b.lastChild as HTMLElement).textContent = STYLES[id].name;
   b.onclick = () => { p.style = id; touched(); refreshAll(); }; styleGrid.appendChild(b); return [id, b] as const;
 });
 const styleDesc = document.createElement('p'); styleDesc.className = 'desc'; sStyle.appendChild(styleDesc);
 const customWrap = document.createElement('div'); customWrap.style.marginTop = '10px';
-customWrap.innerHTML = '<input class="txt" id="custom" maxlength="64" placeholder="Characters, dark to light" spellcheck="false">';
+customWrap.innerHTML = '<input class="txt" id="custom" maxlength="64" placeholder="Characters, dark to light" spellcheck="false" aria-label="Custom characters, dark to light">';
 sStyle.appendChild(customWrap);
 const customIn = customWrap.querySelector('input')!;
 customIn.oninput = () => { p.custom = customIn.value || ' .oO@'; touched(); };
@@ -69,12 +90,13 @@ toggle(sImg, 'invert', 'Invert');
 
 const sCol = sec('Colour');
 const seg = document.createElement('div'); seg.className = 'seg';
+seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Colour mode');
 const modes: [Params['colorMode'], string][] = [['mono', 'Mono'], ['source', 'Picture'], ['palette', 'Palette']];
 const segBtns = modes.map(([m, n]) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { p.colorMode = m; touched(); refreshAll(); }; seg.appendChild(b); return [m, b] as const; });
 sCol.appendChild(seg);
 const sw = document.createElement('div'); sw.className = 'swatches';
 const swBtns = Object.entries(PALETTES).map(([id, pal]) => {
-  const b = document.createElement('button'); b.className = 'sw1'; b.title = pal.name;
+  const b = document.createElement('button'); b.className = 'sw1'; b.title = pal.name; b.setAttribute('aria-label', pal.name + ' palette');
   b.style.background = 'linear-gradient(90deg,' + pal.c.join(',') + ')';
   b.onclick = () => { p.palette = id; p.colorMode = 'palette'; touched(); refreshAll(); }; sw.appendChild(b); return [id, b] as const;
 });
@@ -85,26 +107,26 @@ sCol.appendChild(cols);
 const fgIn = cols.querySelector<HTMLInputElement>('#fg')!, bgIn = cols.querySelector<HTMLInputElement>('#bg')!;
 fgIn.oninput = () => { p.fg = fgIn.value; touched(); }; bgIn.oninput = () => { p.bg = bgIn.value; touched(); };
 refreshers.push(() => {
-  segBtns.forEach(([m, b]) => b.classList.toggle('on', p.colorMode === m));
-  swBtns.forEach(([id, b]) => b.classList.toggle('on', p.colorMode === 'palette' && p.palette === id));
+  segBtns.forEach(([m, b]) => { b.classList.toggle('on', p.colorMode === m); b.setAttribute('aria-pressed', String(p.colorMode === m)); });
+  swBtns.forEach(([id, b]) => { const on = p.colorMode === 'palette' && p.palette === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
   fgIn.value = p.fg; bgIn.value = p.bg;
 });
 
-const sOut = sec('Outlines & glow');
+const sOut = sec('Outlines & glow', true, ['outlines', 'glow']);
 slider(sOut, 'outlines', 'Outlines', 0, 100, 1); slider(sOut, 'glow', 'Glow', 0, 100, 1);
-const sScr = sec('Old screen');
+const sScr = sec('Old screen', false, ['scanlines', 'crt', 'aberration', 'grain', 'flicker']);
 slider(sScr, 'scanlines', 'Scanlines', 0, 100, 1); slider(sScr, 'crt', 'CRT curve', 0, 100, 1);
 slider(sScr, 'aberration', 'Aberration', 0, 100, 1); slider(sScr, 'grain', 'Film grain', 0, 100, 1); slider(sScr, 'flicker', 'Flicker', 0, 100, 1);
-const sMot = sec('Motion');
+const sMot = sec('Motion', false, ['animate', 'rain']);
 toggle(sMot, 'animate', 'Animate'); slider(sMot, 'speed', 'Speed', 0.1, 4, 0.1); slider(sMot, 'rain', 'Digital rain', 0, 1, 0.01);
 
 /* export */
-const sExp = sec('Export', 'exp');
-sExp.insertAdjacentHTML('beforeend', '<label class="ctl" style="grid-template-columns:70px 1fr"><span>Format</span><select id="fmt"></select></label>' +
-  '<label class="ctl" style="grid-template-columns:70px 1fr"><span>Size</span><select id="size"><option value="1280">720p (1280)</option><option value="1920" selected>1080p (1920)</option><option value="3840">4K (3840)</option></select></label>' +
-  '<label class="ctl sw" id="trwrap"><span>Transparent background</span><input type="checkbox" id="tr"></label>' +
-  '<div class="row"><button class="btn primary" id="export" style="flex:1">Export</button><button class="btn" id="cancel" hidden>Cancel</button></div>' +
-  '<progress id="prog" max="1" value="0" hidden></progress><p class="msg" id="msg">Free. No watermark. Rendered on your device.</p>');
+const sExp = document.createElement('section'); sExp.className = 'exp'; sExp.setAttribute('aria-label', 'Export'); panel.appendChild(sExp);
+sExp.insertAdjacentHTML('beforeend', '<div class="two"><label class="f">Format<select id="fmt"></select></label>' +
+  '<label class="f">Size<select id="size"><option value="1280">720p · 1280</option><option value="1920" selected>1080p · 1920</option><option value="3840">4K · 3840</option></select></label></div>' +
+  '<label class="ctl sw" id="trwrap"><span>Transparent background</span><input type="checkbox" class="switch" id="tr"></label>' +
+  '<div class="row"><button class="btn primary" id="export">Export</button><button class="btn" id="cancel" hidden>Cancel</button></div>' +
+  '<progress id="prog" max="1" value="0" hidden aria-label="Export progress"></progress><p class="msg" id="msg" aria-live="polite">Free, no watermark. Rendered on your device.</p>');
 const fmtSel = $<HTMLSelectElement>('fmt'), sizeSel = $<HTMLSelectElement>('size'), trIn = $<HTMLInputElement>('tr');
 const prog = $<HTMLProgressElement>('prog'), msg = $('msg'), expBtn = $<HTMLButtonElement>('export'), cancelBtn = $<HTMLButtonElement>('cancel');
 function fillFormats() {
@@ -118,7 +140,8 @@ fmtSel.onchange = fmtChanged;
 let abort: AbortController | null = null;
 cancelBtn.onclick = () => abort?.abort();
 expBtn.onclick = async () => {
-  if (!src) { msg.textContent = 'Add a picture or video first.'; return; }
+  msg.classList.remove('err');
+  if (!src) { msg.textContent = 'Add a picture or video first.'; msg.classList.add('err'); return; }
   const edge = parseInt(sizeSel.value), fmt = fmtSel.value;
   expBtn.disabled = true; prog.hidden = true; msg.textContent = 'Rendering…';
   const name = 'ascii-' + p.style;
@@ -134,25 +157,30 @@ expBtn.onclick = async () => {
       download(blob, name + '.' + ext); msg.textContent = 'Saved ' + ext.toUpperCase() + ' (' + Math.round(blob.size / 1024) + ' KB).';
     }
   } catch (e) {
-    msg.textContent = (e as Error).name === 'AbortError' ? 'Cancelled.' : 'Export failed: ' + (e as Error).message;
+    const aborted = (e as Error).name === 'AbortError';
+    msg.textContent = aborted ? 'Cancelled.' : 'Export failed: ' + (e as Error).message; msg.classList.toggle('err', !aborted);
   } finally { expBtn.disabled = false; cancelBtn.hidden = true; prog.hidden = true; abort = null; markDirty(); }
 };
 
-function refreshAll() { refreshers.forEach(f => f()); }
+function refreshAll() { refreshers.forEach(f => f()); metaRefreshers.forEach(f => f()); }
 
 /* ---------- presets ---------- */
 const presetCards = PRESETS.map(pr => {
   const b = document.createElement('button'); b.className = 'preset'; b.title = pr.name;
-  b.innerHTML = '<canvas width="120" height="120"></canvas><span>' + pr.name + '</span>';
+  b.innerHTML = '<canvas width="120" height="96" aria-hidden="true"></canvas><span>' + pr.name + '</span>';
   b.onclick = () => { p = applyPreset(p, pr.id); activePreset = pr.id; refreshAll(); syncPresetUI(); markDirty(); };
   presetsEl.appendChild(b); return { pr, b, c: b.querySelector('canvas')! };
 });
-function syncPresetUI() { presetCards.forEach(({ pr, b }) => b.classList.toggle('on', pr.id === activePreset)); }
+function syncPresetUI() {
+  presetCards.forEach(({ pr, b }) => { const on = pr.id === activePreset; b.classList.toggle('on', on); b.classList.toggle('marked', on); b.setAttribute('aria-pressed', String(on)); });
+}
 let thumbAt = 0;
 function renderThumbs() {
-  if (!thumbR || !src) return;
-  thumbR.setSource(src.el, src.w, src.h);
-  const [w, h] = fitSize(src.w / src.h, 132);
+  if (!thumbR) return;
+  // Before a picture is added, the strip previews every preset on the first sample.
+  const s = src ?? (() => { const c = getSample(0); return { el: c as SourceEl, w: c.width, h: c.height }; })();
+  thumbR.setSource(s.el, s.w, s.h);
+  const [w, h] = fitSize(s.w / s.h, 132);
   for (const { pr, c } of presetCards) {
     const q = applyPreset(p, pr.id); q.detail = Math.max(16, Math.round(q.detail * 0.36));
     thumbR.render(q, w, h, clock);
@@ -163,16 +191,31 @@ function renderThumbs() {
 }
 
 /* ---------- source loading ---------- */
+let srcName = '';
+const plate = $('plate'), slugEl = $('slug'), srcInfo = $('srcInfo');
+function syncSlug() {
+  if (!src) return;
+  const style = STYLES[p.style].name, preset = PRESETS.find(x => x.id === activePreset)?.name;
+  slugEl.innerHTML = '<b></b> · ' + (preset ? preset + ' preset · ' : '') + style + ' · detail ' + p.detail;
+  slugEl.querySelector('b')!.textContent = srcName;
+  srcInfo.innerHTML = '<b></b> · ' + src.w + '×' + src.h + ' · ' + src.kind;
+  srcInfo.querySelector('b')!.textContent = srcName;
+}
+metaRefreshers.push(syncSlug);
 function setSource(el: SourceEl, w: number, h: number, kind: 'image' | 'video') {
   if (src?.kind === 'video' && src.el !== el) { const o = src.el as HTMLVideoElement; o.pause(); URL.revokeObjectURL(o.src); }
   src = { el, w, h, kind };
   renderer?.setSource(el, w, h);
-  drop.classList.add('hidden');
+  drop.classList.add('hidden'); view.classList.remove('empty');
+  ($('compare') as HTMLButtonElement).disabled = false; ($('split') as HTMLButtonElement).disabled = false;
+  plate.style.setProperty('--ar', String(w / h));
   transport.hidden = kind !== 'video';
+  syncSlug();
   fillFormats(); renderThumbs(); markDirty();
 }
-function loadSample(i: number) { const c = getSample(i); setSource(c, c.width, c.height, 'image'); }
+function loadSample(i: number) { const c = getSample(i); srcName = SAMPLES[i % SAMPLES.length].id + '.png'; setSource(c, c.width, c.height, 'image'); }
 async function loadFile(f: File) {
+  srcName = f.name;
   const url = URL.createObjectURL(f);
   if (f.type.startsWith('video/')) {
     const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
@@ -189,13 +232,15 @@ const fmtT = (s: number) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)
 function bindVideo(v: HTMLVideoElement) {
   play.onclick = () => { if (v.paused) void v.play(); else v.pause(); play.textContent = v.paused ? 'Play' : 'Pause'; markDirty(); };
   play.textContent = 'Pause';
-  scrub.oninput = () => { v.currentTime = (parseFloat(scrub.value) / 1000) * v.duration; markDirty(); };
-  v.ontimeupdate = () => { if (document.activeElement !== scrub) scrub.value = String(Math.round(v.currentTime / v.duration * 1000)); timeEl.textContent = fmtT(v.currentTime) + ' / ' + fmtT(v.duration); };
+  const fill = () => scrub.style.setProperty('--v', (parseFloat(scrub.value) / 10) + '%');
+  scrub.oninput = () => { v.currentTime = (parseFloat(scrub.value) / 1000) * v.duration; fill(); markDirty(); };
+  v.ontimeupdate = () => { if (document.activeElement !== scrub) { scrub.value = String(Math.round(v.currentTime / v.duration * 1000)); fill(); } timeEl.textContent = fmtT(v.currentTime) + ' / ' + fmtT(v.duration); };
   v.onseeked = markDirty;
 }
 $('browse').onclick = () => fileIn.click(); $('replace').onclick = () => fileIn.click();
 fileIn.onchange = () => { const f = fileIn.files?.[0]; if (f) void loadFile(f); fileIn.value = ''; };
-$('samples').innerHTML = SAMPLES.map((s, i) => '<button class="btn" data-s="' + i + '">Sample: ' + s.name + '</button>').join('');
+$('samples').innerHTML = SAMPLES.map((s, i) => '<button class="sample" data-s="' + i + '"><canvas width="240" height="192" aria-hidden="true"></canvas>' + s.name + '</button>').join('');
+$('samples').querySelectorAll('canvas').forEach((c, i) => c.getContext('2d')!.drawImage(getSample(i), 0, 0, c.width, c.height));
 $('samples').onclick = e => { const b = (e.target as HTMLElement).closest('[data-s]') as HTMLElement | null; if (b) loadSample(+b.dataset.s!); };
 for (const t of ['dragenter', 'dragover']) window.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); });
 for (const t of ['dragleave', 'drop']) window.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); });
@@ -206,14 +251,37 @@ window.addEventListener('paste', e => {
 });
 
 /* compare */
+function drawOrig() {
+  if (!src) return;
+  if (orig.width !== out.width || orig.height !== out.height) { orig.width = out.width; orig.height = out.height; }
+  orig.getContext('2d')!.drawImage(src.el as CanvasImageSource, 0, 0, orig.width, orig.height);
+}
 function showOrig(on: boolean) {
   view.classList.toggle('compare', on);
-  if (on && src) { orig.width = out.width; orig.height = out.height; orig.getContext('2d')!.drawImage(src.el as CanvasImageSource, 0, 0, orig.width, orig.height); }
+  if (on) drawOrig();
 }
+const splitBtn = $<HTMLButtonElement>('split'), divider = $<HTMLButtonElement>('divider');
+let splitAt = 50;
+const putSplit = (v: number) => { splitAt = Math.max(0, Math.min(100, v)); plate.style.setProperty('--p', splitAt + '%'); divider.setAttribute('aria-valuenow', String(Math.round(splitAt))); };
+splitBtn.onclick = () => {
+  const on = !view.classList.contains('split');
+  view.classList.toggle('split', on); splitBtn.setAttribute('aria-pressed', String(on));
+  if (on) { putSplit(splitAt); drawOrig(); }
+};
+let dragging = false;
+const dragTo = (e: PointerEvent) => { const r = plate.getBoundingClientRect(); putSplit((e.clientX - r.left) / r.width * 100); };
+plate.addEventListener('pointerdown', e => { if (!view.classList.contains('split')) return; dragging = true; plate.setPointerCapture(e.pointerId); dragTo(e); });
+plate.addEventListener('pointermove', e => { if (dragging) dragTo(e); });
+['pointerup', 'pointercancel'].forEach(t => plate.addEventListener(t, () => { dragging = false; }));
+divider.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 10 : 2;
+  if (e.key === 'ArrowLeft') putSplit(splitAt - step); else if (e.key === 'ArrowRight') putSplit(splitAt + step); else return;
+  e.preventDefault();
+});
 const cmpBtn = $('compare');
 ['pointerdown'].forEach(t => cmpBtn.addEventListener(t, () => showOrig(true)));
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => cmpBtn.addEventListener(t, () => showOrig(false)));
-window.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'c' && !(e.target as HTMLElement).matches('input,select')) showOrig(true); });
+window.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'c' && !e.repeat && !(e.target as HTMLElement).matches('input,select')) showOrig(true); });
 window.addEventListener('keyup', e => { if (e.key.toLowerCase() === 'c') showOrig(false); });
 
 /* ---------- loop ---------- */
@@ -229,7 +297,7 @@ function frame(now: number) {
   renderer.render({ ...p, transparent: false }, w, h, t);
   dirty = false;
   if (live && now - thumbAt > 1500) renderThumbs();
-  if (view.classList.contains('compare')) showOrig(true);
+  if (view.classList.contains('compare') || view.classList.contains('split')) drawOrig();
 }
 requestAnimationFrame(frame);
 let rt: number; window.addEventListener('resize', () => { clearTimeout(rt); rt = window.setTimeout(markDirty, 120); });
@@ -238,5 +306,6 @@ let rt: number; window.addEventListener('resize', () => { clearTimeout(rt); rt =
 const q = new URLSearchParams(location.search);
 const qp = q.get('preset'); if (qp && PRESETS.some(x => x.id === qp)) { p = applyPreset(p, qp); activePreset = qp; }
 const qs = q.get('style'); if (qs && qs in STYLES) { p.style = qs as Params['style']; activePreset = null; }
-refreshAll(); syncPresetUI();
+refreshAll(); syncPresetUI(); fillFormats();
+if (renderer && !q.has('sample')) renderThumbs();
 if (renderer && q.has('sample')) loadSample(parseInt(q.get('sample')!) || 0);
