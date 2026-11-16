@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASCII Studio: generator</title><meta name="theme-color" content="#07070A">
+<link rel="stylesheet" href="../src/style.css"></head>
+<body>
+<nav class="nav"><a class="brand" href="../">▚ ASCII Studio <span class="tag mono">Generator</span></a><div class="links"><a href="../">Home</a><a href="../#styles">Styles</a><a href="../#faq">FAQ</a></div></nav>
+<div class="app">
+  <div class="main">
+    <div class="view" id="view">
+      <canvas id="out"></canvas><canvas id="orig"></canvas>
+      <div class="drop" id="drop">
+        <h2>Drop an image or video</h2>
+        <p>Or paste from your clipboard. Nothing is uploaded: it all runs in your browser.</p>
+        <div class="row" style="justify-content:center"><button class="btn primary lg" id="browse">Browse files</button></div>
+        <div class="row" id="samples" style="justify-content:center"></div>
+        <p class="mono" id="glmsg" hidden>This tool needs WebGL2. Try a recent Chrome, Edge, Firefox or Safari.</p>
+      </div>
+      <div class="corner"><button class="btn" id="compare" title="Hold to compare (or hold C)">Hold to compare</button><button class="btn" id="replace">Replace</button></div>
+    </div>
+    <div class="transport" id="transport" hidden><button class="btn" id="play">Pause</button><input type="range" id="scrub" min="0" max="1000" value="0"><span class="mono" id="time">0:00 / 0:00</span></div>
+    <div class="presets" id="presets"></div>
+  </div>
+  <aside class="panel" id="panel"></aside>
+</div>
+<input type="file" id="file" accept="image/*,video/*" hidden>
+<script type="module" src="../src/app.ts"></script>
+</body></html>

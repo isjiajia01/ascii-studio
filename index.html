@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASCII Studio: image &amp; video to ASCII, free</title>
+<meta name="description" content="Free ASCII art generator. Turn any image or video into ASCII, braille, halftone dots, dither, bricks or particles. Runs in your browser; nothing is uploaded.">
+<meta name="theme-color" content="#07070A"><link rel="stylesheet" href="./src/style.css"></head>
+<body>
+<nav class="nav"><a class="brand" href="./">▚ ASCII Studio <span class="tag mono">Free</span></a>
+<div class="links"><a href="#how">How it works</a><a href="#styles">Styles</a><a href="#features">Features</a><a href="#faq">FAQ</a></div>
+<div class="cta"><a class="btn primary" href="./app/">Open the generator</a></div></nav>
+
+<section class="band"><div class="wrap hero">
+  <div class="hero-l">
+    <span class="mono kicker">■ Free · Unlimited ASCII patterns</span>
+    <h1>Make pictures<br>out of <em id="typed">text.</em></h1>
+    <p class="lede">Drop in an image or a video and rebuild it from ASCII, braille, halftone dots, dither or bricks. Private, and it all runs in your browser.</p>
+    <div class="row"><a class="btn primary lg" href="./app/">Open the generator</a><a class="btn lg" href="#styles">See the styles</a></div>
+    <ul class="facts mono"><li>No watermark</li><li>Nothing uploaded</li><li>Video to MP4</li></ul>
+  </div>
+  <div class="hero-r">
+    <div class="stage cmp" id="heroCmp" style="position:absolute;inset:0;--p:100%"><canvas id="heroOrig"></canvas><canvas id="heroOut" class="after"></canvas><div class="bar"><i></i></div><span class="t l mono">Output</span><span class="t r mono">Original</span></div>
+    <div class="pills" id="heroPills"></div>
+    <div class="nogl"><p>The live preview needs WebGL2. Try a recent Chrome, Edge, Firefox or Safari.</p></div>
+  </div>
+</div></section>
+
+<section class="band" id="how"><div class="wrap">
+  <div class="sec-top"><div><span class="mono kicker"><b>01</b>How it works</span><h2>Three steps from<br>photo to ASCII art.</h2></div><div class="sub">Nothing to install. The result is ready the moment you drop a picture in.</div></div>
+  <ol class="steps" style="list-style:none;margin:0;padding:0">
+    <li><span class="mono kicker">01</span><h3>Add a photo or video</h3><p>Upload, drag it in or paste from your clipboard. No file to hand? Start from a sample.</p></li>
+    <li><span class="mono kicker">02</span><h3>Pick a style</h3><p>Fourteen styles and nineteen presets, then tune detail, colour, outlines and glow live.</p></li>
+    <li><span class="mono kicker">03</span><h3>Export, free</h3><p>Save a JPEG, a transparent WebP or an MP4. No account, no card, no watermark.</p></li>
+  </ol>
+</div></section>
+
+<section class="band" id="styles"><div class="wrap">
+  <div class="sec-top"><div><span class="mono kicker"><b>02</b>Styles</span><h2>One picture,<br>many kinds of texture.</h2></div><div class="sub">Drag the line across to see each style before and after, or open it in the generator with that look already on.</div></div>
+  <div class="grid4" id="gallery"></div>
+  <p class="mono kicker" style="padding:18px 40px">Plus shade blocks, sparse, binary, letter tiles, film, drifting pixels and your own custom characters.</p>
+</div></section>
+
+<section class="band" id="features"><div class="wrap">
+  <div class="sec-top"><div><span class="mono kicker"><b>03</b>Features</span><h2>More than a filter.<br>Made to be tuned.</h2></div><div class="sub">Live video, presets that show your own picture, and finishing touches borrowed from old screens.</div></div>
+  <div class="feat">
+    <div><span class="mono kicker">Video</span><h3>Video to ASCII, exported as MP4</h3><p>Videos convert live as they play. Export renders every frame, so the file is smooth whatever your machine, at 720p, 1080p or 4K and up to a minute long.</p></div>
+    <div><span class="mono kicker">Presets</span><h3>Start from a preset, keep your own</h3><p>The Presets row shows your own picture in every preset, live. Digital rain, Old monitor or Brick mosaic set every control at once. Tune one until it is yours.</p></div>
+    <div><span class="mono kicker">Finishing</span><h3>Colour, outlines and glow</h3><p>Pick a palette or keep the picture's colours, trace the edges, then finish with bloom, scanlines, CRT curvature, aberration, grain and flicker. Move the controls:</p>
+      <div class="live"><canvas id="live"></canvas>
+        <label class="rng"><span class="mono">Outlines</span><input type="range" min="0" max="100" value="55" data-k="outlines"></label>
+        <label class="rng"><span class="mono">Glow</span><input type="range" min="0" max="100" value="40" data-k="glow"></label>
+        <label class="rng"><span class="mono">Scanlines</span><input type="range" min="0" max="100" value="0" data-k="scanlines"></label></div></div>
+  </div>
+</div></section>
+
+<section class="band" id="faq"><div class="wrap faq">
+  <div class="sec-top"><div><span class="mono kicker"><b>04</b>FAQ</span><h2>Questions,<br>answered.</h2></div><div class="sub">The short answers, in plain words.</div></div>
+  <details open><summary>What is ASCII art?</summary><p>ASCII art draws a picture using only text characters. Dark areas get dense characters such as @ and #, light areas get thin ones such as . and :, so from a distance the letters add up to the image. This generator also makes braille, halftone dots, dither and brick mosaics.</p></details>
+  <details><summary>How do I turn a photo into ASCII art?</summary><p>Open the generator and drop in a photo, or paste one, and it converts at once. Pick a style or a preset, use Detail to set how many characters wide it is, then save it as an image.</p></details>
+  <details><summary>Can I turn a video into ASCII art?</summary><p>Yes. Add a video and it converts live as it plays. Export saves an MP4 at 720p, 1080p or 4K, up to a minute long. Every frame is converted, so the result is smooth even on a slow machine. MP4 export needs a browser with WebCodecs (Chrome, Edge, Safari 16.4+).</p></details>
+  <details><summary>Are my photos uploaded anywhere?</summary><p>No. The conversion runs in your browser on your own device, so your pictures and videos never leave it.</p></details>
+  <details><summary>What is the difference between the ASCII, braille and halftone styles?</summary><p>ASCII styles pick a letter or symbol by brightness. Braille uses tiny dot patterns, so each cell holds up to eight dots and the detail is finer. Halftone (Round dots) draws dots of different sizes, like a newspaper print.</p></details>
+  <details><summary>What is dithering, and when should I use it?</summary><p>Dithering fakes shades with patterns of dots in only two tones, the look of old one-bit screens. It suits logos, flat graphics and posters. For photos with soft shading, Braille or Detailed usually looks smoother.</p></details>
+  <details><summary>How do I make the Matrix digital rain effect?</summary><p>Open the generator and click Digital rain in the Presets row. It gives you green 1s and 0s on black, with a glow and a shimmer, and it moves when you add a video or turn Animate on.</p></details>
+</div></section>
+
+<section class="band"><div class="wrap"><div class="cta-cell"><h2>Make your first one.</h2><p>Free, private and ready in a few seconds.</p><div class="row" style="justify-content:center;margin-top:16px"><a class="btn primary lg" href="./app/">Open the generator</a></div></div></div></section>
+<footer class="band"><div class="wrap"><span>▚ ASCII Studio</span><span class="mono">Runs entirely in your browser</span></div></footer>
+<script type="module" src="./src/landing.ts"></script>
+</body></html>
