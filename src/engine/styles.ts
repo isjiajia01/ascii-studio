@@ -17,7 +17,7 @@ export const STYLES: Record<StyleId, StyleDef> = {
   detailed: { id:'detailed', name:'Detailed', desc:"A long run of fine characters, in the picture's own colours.", mode:0, aspect:2, chars:' .\'`^",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$', sort:true },
   blocks:   { id:'blocks', name:'Shade blocks', desc:'Chunky shade blocks, from light to solid.', mode:0, aspect:2, chars:' ░▒▓█' },
   letters:  { id:'letters', name:'Letter tiles', desc:'Letters on dim tiles, like a keyboard wall.', mode:0, aspect:2, chars:' ABCDEFGHIJKLMNOPQRSTUVWXYZ', sort:true, shade:0.6, tile:true },
-  sparse:   { id:'sparse', name:'Sparse', desc:'Only the darkest areas get a mark. Airy and light.', mode:0, aspect:2, chars:' .:+*', tone:2.2 },
+  sparse:   { id:'sparse', name:'Sparse', desc:'A few marks in the highlights. Invert for ink on paper.', mode:0, aspect:2, chars:' .:+*', tone:2.2 },
   binary:   { id:'binary', name:'Binary', desc:'Ones and zeros, shimmering with the light.', mode:0, aspect:2, chars:'01', random:true, shade:1 },
   braille:  { id:'braille', name:'Braille', desc:'Tiny raised-dot cells for smooth, delicate detail.', mode:4, aspect:2 },
   dots:     { id:'dots', name:'Round dots', desc:'A halftone grid, like a printed poster.', mode:1, aspect:1 },

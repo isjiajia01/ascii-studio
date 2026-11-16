@@ -60,7 +60,8 @@ void main(){
     if(uMode==0){
       float n=float(uGlyphs);
       float t=floor(pow(l,uTone)*(n-.001));
-      if(uRandom>.5) t=floor(hash(cell+floor(uTime*3.)*1.7)*n);
+      if(uRandom>.5) t=1.+floor(hash(cell+floor(uTime*3.)*1.7)*(n-1.));
+      if(uTileBg>.5) t=1.+floor(hash(cell)*(n-1.));
       float shade = mix(1., l, uShade);
       bool edge=false;
       if(uEdge>0.){
@@ -77,11 +78,16 @@ void main(){
       float g = texture(uAtlas, auv).a;
       if(uRandom>.5 && !edge) g*=smoothstep(.05,.35,l);
       vec3 bc = baseColor(c,l)*shade;
-      if(uTileBg>.5){ col=mix(bc*.2,bc,g); cov=1.; } else { col=bc; cov=g; }
+      if(uTileBg>.5){
+        vec3 tile = uColorMode==0 ? mix(uBg,uFg,l) : baseColor(c,l);
+        float gap = smoothstep(0.,.07,min(min(loc.x,1.-loc.x),min(loc.y,1.-loc.y)));
+        vec3 ink = lum(tile)>.45 ? vec3(.035) : vec3(.95);
+        col=mix(tile,ink,g*.9*smoothstep(.015,.18,l)); cov=gap;
+      } else { col=bc; cov=g; }
     }
     else if(uMode==1){ // round dots
       float r=sqrt(l)*.75; float d=length(loc-.5); float aa=1.2/uCell.x;
-      cov = 1.-smoothstep(r-aa,r+aa,d); col = baseColor(c,l);
+      cov = l<=0. ? 0. : 1.-smoothstep(r-aa,r+aa,d); col = baseColor(c,l);
     }
     else if(uMode==2){ // dither
       float on = l>bayer(cell) ? 1.:0.;
@@ -93,24 +99,26 @@ void main(){
       if(uColorMode==1){
         float best=1e9; q=LEGO[0];
         for(int i=0;i<10;i++){ vec3 dd=c-LEGO[i]; float s=dot(dd,dd); if(s<best){best=s;q=LEGO[i];} }
-      } else { q=baseColor(c, floor(l*5.)/4.); }
+      } else { float level=floor(l*4.+.5)/4.; q=uColorMode==0 ? mix(uBg,uFg,level) : baseColor(c,level); }
       vec2 dq=loc-.5; float d=length(dq);
       float edgeD=max(abs(dq.x),abs(dq.y));
-      float stud=smoothstep(.34,.30,d);
+      float stud=(1.-smoothstep(.30,.34,d));
       vec3 b=q*(.8+.2*stud);
-      b*=1.+.28*stud*smoothstep(.1,-.3,dq.x+dq.y)*(1.-smoothstep(.18,.34,d)*.0);
-      b*=1.-.35*smoothstep(.30,.36,d)*smoothstep(.2,-.2,-(dq.x+dq.y));
+      b*=1.+.28*stud*(1.-smoothstep(-.3,.1,dq.x+dq.y));
+      b*=1.-.35*smoothstep(.30,.36,d)*(1.-smoothstep(-.2,.2,-(dq.x+dq.y)));
       b*=1.-smoothstep(.44,.5,edgeD)*.55;
       col=b; cov=1.;
     }
     else if(uMode==4){ // braille
       vec2 sub=loc*vec2(2.,4.); vec2 id=floor(sub); vec2 f=fract(sub)-.5;
       vec2 dctr=(cell*uCell+(id+.5)*uCell/vec2(2.,4.))/uRes;
-      vec3 dc=adj(samp(dctr,max(lod0-1.,0.))); float dl=lum(dc);
+      vec3 dc=adj(samp(dctr,max(lod0-2.,0.))); float dl=lum(dc);
       if(uRain>0.){ dl*=mix(1.,.08+1.5*rainv(cell),uRain); }
       float thr=mix(.5,bayer(cell*vec2(2.,4.)+id),.6);
       float on=dl>thr?1.:0.;
-      float d=length(f); cov=on*(1.-smoothstep(.3,.38,d));
+      vec2 subSize=uCell/vec2(2.,4.);
+      float d=length(f*subSize); float radius=min(subSize.x,subSize.y)*.34;
+      cov=on*(1.-smoothstep(max(0.,radius-.65),radius+.65,d));
       col=baseColor(c,l);
     }
     else if(uMode==5){ // particles

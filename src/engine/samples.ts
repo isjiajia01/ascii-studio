@@ -62,7 +62,8 @@ export const SAMPLES = [
 ];
 const cache = new Map<string, HTMLCanvasElement>();
 export function getSample(i: number): HTMLCanvasElement {
-  const s = SAMPLES[i % SAMPLES.length];
+  const index = Number.isFinite(i) ? Math.trunc(i) : 0;
+  const s = SAMPLES[((index % SAMPLES.length) + SAMPLES.length) % SAMPLES.length];
   if (!cache.has(s.id)) cache.set(s.id, s.make());
   return cache.get(s.id)!;
 }
