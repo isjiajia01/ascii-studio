@@ -1,6 +1,6 @@
 # ASCII Studio: design
 
-Scope: the landing page (`index.html`, `src/landing.ts`) and the generator (`app/index.html`, the DOM half of `src/app.ts`). One stylesheet: `src/style.css`. The engine (`src/engine/**`) is out of scope, except the additive `balloon` sample in `src/engine/samples.ts`.
+Scope: the landing page (`index.html`, `src/landing.ts`), the library (`library/index.html`, `src/library.ts`, catalogue `src/works.ts`, media `public/works/`) and the generator (`app/index.html`, the DOM half of `src/app.ts`). One stylesheet: `src/style.css`. The engine (`src/engine/**`) is out of scope, except the additive `balloon` sample in `src/engine/samples.ts`.
 Guideline used: WCAG 2.2 AA for the web (responsive reflow, keyboard focus, reduced motion).
 
 ## Commitment
@@ -72,6 +72,16 @@ Space (4-pt): `--s1`…`--s9` = 4, 8, 12, 16, 24, 32, 48, 72, 112. Radius: `--r`
 - Reduced motion: no hero wipe (it rests at 68%), no headline animation, no smooth scroll or smooth paging.
 - Renders inspected at 1440×900, 1440×768, 960×800 and 390×844 (landing; generator empty, loaded, video + split, MP4 export progress, colour modes, scrolled controls). `scrollWidth - clientWidth` is 0 at 390 and 960. Evidence is in `~/.cache/agent-runtime/ascii-polish/fix/`.
 - Round 2 (review 2 fixes): landing and generator at 390×844, 768×1024, 1024×768 and 1440×900; video mode at 390 (pinned and scrolled), 768 and 1440; split drag, export error, MP4 progress, menus, focus and hover. `scrollWidth - clientWidth` is 0 at all four widths on both pages. Evidence is in `~/.cache/agent-runtime/ascii-polish/ui2/`.
+
+## Library (`/library/`)
+- **Commitment.** The print archive: finished proofs pinned to a wall, each at its own shape with a label under it (title, then look), and one lifted onto the light table at a time. Same type, palette, crop-mark plates and state rules as the rest of the site; no new tokens.
+- **Content rule.** Only public-domain or CC0 sources, never competitor assets. Each work in `src/works.ts` records file, size, preset + tweaks, a one-line note on why the look suits the picture, and its credit (author, source page, licence). The Sources list and the viewer show the credit. Media are re-encoded copies (JPEG long edge ≤1600; H.264, no audio, ≤12 s, ≤1.2 MB).
+- **Wall** (`.wall` > `.work` > `a.w-link`): justified rows. Each work is `flex: var(--ar) 1 calc(var(--ar) * var(--row))`, so a row shares one height and every picture keeps its aspect; a trailing filler stops the last row stretching. `--row` 300 / 250 (≤1080) / 200px (≤860); one column under 560px, with tall proofs capped at 58svh. Proofs are rendered live by the engine (one shared WebGL context drawn into 2D canvases), never stored screenshots; small proofs cap Detail so a cell stays readable (glyph 3.5px, braille 3, dither 2, brick 6). Video proofs carry a `.tag` ("Video · 9 s") and play only while near the screen.
+- **Filter**: All / Stills / Video chips (count in `.n`), chosen = marker ring. **Previews toggle**: "Pause previews" / "Play previews" button (WCAG 2.2.2 pause control); starts paused under reduced motion, where video proofs show a still frame.
+- **Viewer** (`dialog.viewer`, opened by `#<id>`, shareable): full-screen light table. Bar (previous / next, "3 of 9", Close + Esc), the plate as a before/after slider resting at 100% (look only; drag or arrow keys reveal the original, and the Look/Original tags appear only while comparing), a Play/Pause button for video, and the label rail: medium, title, maker, note, settings table (look, style + detail, colour, picture, effects), **Open in the generator** (`../app/?work=<id>`), credit. Prev/next cycle the filtered set. Close returns focus to the proof; Back closes it. ≤860px it becomes one scrolling sheet (sticky bar, picture, then label).
+- **Generator deep link**: `?work=<id>` loads that file and that work's settings. A work with tweaks marks no preset as chosen (its settings are not a preset); an untweaked one circles its preset.
+- **States**: loading (empty well until the media decode), failed file (`.work.failed`, coral message), no WebGL2 (originals are drawn instead, with an alert line).
+- **Verified** (Chromium, Playwright): wall at 390, 640, 768, 1024 and 1440 (overflow 0); viewer at 1440 and 390 (still, video, compare by keyboard, prev/next, Esc and focus return); filter; reduced motion; all nine `?work=` links in the generator; production build via `vite preview`. Evidence: `~/.cache/agent-runtime/ascii-library/shots/`. Not verified: Safari/Firefox, real touch devices, screen readers.
 
 ## Decisions and deferred
 - Fonts are self-hosted (Latin subset only). Non-Latin text and the braille/block glyph ramps fall back to the system stack.

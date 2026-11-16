@@ -207,6 +207,72 @@ footer .wrap{display:flex;align-items:baseline;gap:var(--s3) var(--s6);flex-wrap
 .foot-credit{margin-left:auto}
 footer .foot-credit a{color:var(--paper-2)}
 
+/* ---------- library: a wall of finished proofs, one on the light table at a time ---------- */
+.nav .links a[aria-current=page],.menu-pop a[aria-current=page]{color:var(--paper);text-decoration:underline;text-decoration-color:var(--paper-3);text-underline-offset:6px}
+.lib-head{display:grid;grid-template-columns:var(--cols);gap:var(--gut);align-items:end;padding:var(--s8) 0 var(--s8)}
+.lib-intro{display:flex;flex-direction:column;gap:var(--s5)}
+.lib-intro .lede{max-width:44ch}
+.lib-tools{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);flex-wrap:wrap}
+.chip .n{margin-left:2px;font-size:10.5px;color:var(--paper-3)}
+.chip[aria-pressed=true] .n{color:var(--paper-2)}
+#motion svg,#vPlay svg{width:12px;height:12px;flex:none;fill:currentColor}
+/* justified rows: each proof grows in proportion to its aspect ratio, so a row shares one height and every picture keeps its shape */
+.lib-wall{padding-bottom:var(--s8)}
+.wall{--row:300px;display:flex;flex-wrap:wrap;gap:64px 44px;padding:18px}
+.wall::after{content:"";flex:1e4 1 0}
+.work{flex:var(--ar) 1 calc(var(--ar) * var(--row));min-width:0}
+.w-link{display:grid;gap:var(--s4);text-decoration:none;color:var(--paper-2)}
+.w-link:focus-visible{outline-offset:24px}
+.work .plate{width:100%;aspect-ratio:var(--ar)}
+.work .plate .tag{z-index:2}
+.w-link:hover .plate::before{--m:var(--paper-2)}
+.w-cap{display:grid;gap:2px}
+.w-title{font-size:17px;line-height:1.25;font-weight:650;letter-spacing:-.005em;color:var(--paper)}
+.w-look{font-size:14px;color:var(--paper-3)}
+.w-link:hover .w-look{color:var(--paper-2)}
+.work.failed .plate::after{content:"Could not load this file.";position:absolute;inset:0;display:grid;place-items:center;color:var(--alert);font-size:14px}
+.nogl-lib{margin-top:var(--s6);color:var(--alert)}
+
+.lib-credits{padding:var(--s9) 0;border-top:1px solid var(--rule);display:grid;grid-template-columns:var(--cols);gap:var(--gut)}
+.cred-lede{color:var(--paper-2);font-size:17px;max-width:56ch;margin-bottom:var(--s6);text-wrap:pretty}
+.cred-list li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);gap:var(--s1) var(--s4);align-items:baseline;padding:14px 0;border-top:1px solid var(--rule);font-size:15px;color:var(--paper-2)}
+.cred-list li:last-child{border-bottom:1px solid var(--rule)}
+.cred-list .link{font-weight:600}
+.cred-src{font-size:14px;color:var(--paper-3)}
+.cred-src a{color:var(--paper-2);text-decoration-color:var(--rule-strong);text-underline-offset:3px}
+.cred-src a:hover{color:var(--paper);text-decoration-color:var(--paper-3)}
+
+html:has(.viewer[open]){overflow:hidden}
+.viewer{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;background:var(--carbon-0);color:var(--paper)}
+.viewer[open]{display:grid;grid-template-columns:minmax(0,1fr) 400px;grid-template-rows:var(--nav-h) minmax(0,1fr);grid-template-areas:"bar bar" "stage label"}
+.viewer::backdrop{background:var(--carbon-0)}
+.v-bar{grid-area:bar;display:flex;align-items:center;justify-content:space-between;gap:var(--s3);padding:0 var(--s5);border-bottom:1px solid var(--rule)}
+.v-nav{display:flex;align-items:center;gap:var(--s2)}
+.v-nav .data{margin-left:var(--s2)}
+.v-stage{grid-area:stage;display:flex;flex-direction:column;min-width:0;min-height:0}
+.v-view{--ar:1;flex:1;min-height:0;display:grid;place-items:center;container-type:size;overflow:hidden}
+.v-view .plate{width:min(calc(100cqw - 96px),calc((100cqh - 96px) * var(--ar)));aspect-ratio:var(--ar)}
+.viewer .cmp{cursor:ew-resize;touch-action:pan-y}
+.viewer .cmp .tag{display:none}
+.viewer .cmp.is-cmp .tag{display:block}
+.v-tools{display:flex;align-items:center;gap:var(--s4);min-height:56px;padding:var(--s2) var(--s5);border-top:1px solid var(--rule)}
+.v-tools #vPlay{min-width:88px;justify-content:flex-start}
+.v-hint{margin-left:auto}
+.v-label{grid-area:label;display:flex;flex-direction:column;gap:var(--s4);min-height:0;overflow-y:auto;padding:var(--s6) var(--s5);border-left:1px solid var(--rule);background:var(--carbon-1);scrollbar-width:thin;scrollbar-color:var(--rule-strong) transparent}
+.v-label h2{font-size:clamp(36px,3.2vw,52px)}
+.v-by{color:var(--paper-2);font-size:15px;margin-top:calc(var(--s2) * -1)}
+.v-note{font-size:17px;line-height:1.5;max-width:40ch;text-wrap:pretty}
+.v-set{display:grid;margin:var(--s2) 0}
+.v-set div{display:grid;grid-template-columns:72px minmax(0,1fr);gap:var(--s3);padding:10px 0;border-top:1px solid var(--rule);font-size:14px;line-height:1.45}
+.v-set div:last-child{border-bottom:1px solid var(--rule)}
+.v-set dt{color:var(--paper-3)}
+.v-set dd{margin:0;color:var(--paper)}
+.v-set dd .data{color:var(--paper-2)}
+.v-label .btn.primary{align-self:stretch}
+.v-credit{font-size:13.5px;line-height:1.5;color:var(--paper-3)}
+.v-credit .link{color:var(--paper-2)}
+@media (pointer:coarse){.hint-keys{display:none}}
+
 /* ---------- inputs ---------- */
 input[type=range]{--v:50%;-webkit-appearance:none;appearance:none;width:100%;height:24px;margin:0;background:transparent;cursor:pointer}
 input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--paper) var(--v),var(--rule-strong) var(--v))}
@@ -458,6 +524,33 @@ select:disabled{opacity:.45;cursor:default}
   .app.is-video #play .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .app.is-video .toolbar{grid-area:bar;border-top:0;padding-left:var(--s2)}
   .app.is-video .view{border-bottom:1px solid var(--rule)}
+}
+/* library */
+@media (max-width:1080px){
+  .wall{--row:250px;gap:56px 36px}
+  .viewer[open]{grid-template-columns:minmax(0,1fr) 340px}
+}
+@media (max-width:860px){
+  .lib-head,.lib-credits{grid-template-columns:1fr;gap:var(--s5)}
+  .lib-head{padding:var(--s7) 0 var(--s7)}
+  .lib-credits{padding:var(--s8) 0}
+  .wall{--row:200px;gap:52px 32px}
+  .cred-list li{grid-template-columns:1fr}
+  /* the viewer becomes one scrolling sheet: picture pinned under the bar, label below */
+  .viewer[open]{display:block;overflow-y:auto}
+  .v-bar{position:sticky;top:0;z-index:3;height:var(--nav-h);padding:0 var(--s4);background:var(--carbon-0)}
+  .v-view{flex:none;height:clamp(240px,calc((100vw - 32px) / var(--ar) + 48px),60svh)}
+  .v-view .plate{width:min(calc(100cqw - 48px),calc((100cqh - 48px) * var(--ar)))}
+  .v-tools{padding:var(--s2) var(--s4)}
+  .v-label{overflow:visible;border-left:0;border-top:1px solid var(--rule);padding:var(--s5) var(--s4) var(--s7)}
+}
+@media (max-width:560px){
+  .wall{gap:56px;padding:18px 18px 0}
+  .work{flex:1 1 100%;max-width:none}
+  /* a tall proof never outgrows the screen: it keeps its shape and its caption stays with it */
+  .w-link{width:min(100%,calc(58svh * var(--ar)))}
+  .lib-tools{align-items:flex-start}
+  .v-hint{font-size:10.5px}
 }
 @media (max-width:420px){
   .facts{gap:var(--s2) 14px;font-size:13px}

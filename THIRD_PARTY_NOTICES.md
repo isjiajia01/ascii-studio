@@ -1,5 +1,23 @@
 # Third-party notices
 
+## Library media (`public/works/`)
+
+Re-encoded copies (resized, cropped or trimmed; video without audio). No licence below requires attribution; credit is given on the Library page anyway.
+
+| File | Work | Author | Source | Licence |
+|---|---|---|---|---|
+| pearl.jpg | Girl with a Pearl Earring, c. 1665 | Johannes Vermeer (Mauritshuis) | https://commons.wikimedia.org/wiki/File:Meisje_met_de_parel.jpg | Public domain |
+| wave.jpg | Under the Wave off Kanagawa, c. 1830–32 (JP1847) | Katsushika Hokusai (The Met) | https://www.metmuseum.org/art/collection/search/45434 | Public domain, Met Open Access (CC0) |
+| bridge.jpg | Széchenyi Chain Bridge in Budapest at night, 2013 | Wilfredor | https://commons.wikimedia.org/wiki/File:Sz%C3%A9chenyi_Chain_Bridge_in_Budapest_at_night.jpg | CC0 1.0 |
+| lynx.jpg | Portrait of a Carpathian Lynx, 2024 | Wilfredor | https://commons.wikimedia.org/wiki/File:Portrait_of_a_Carpathian_Lynx.jpg | CC0 1.0 |
+| aldrin.jpg | AS11-40-5903, 1969 (cropped) | Neil Armstrong / NASA | https://commons.wikimedia.org/wiki/File:Aldrin_Apollo_11_original.jpg | Public domain (NASA) |
+| launch.mp4 | Artemis I Launch (Press Site), 2022 (9 s excerpt) | NASA / Sam Lott | https://images.nasa.gov/details/Artemis%20I%20Launch%202022%20CU%20tracking%20from%20Press%20Site_compressed | Public domain (NASA) |
+| orion.mp4 | First Imagery of Earth From Orion Spacecraft, 2022 (12 s excerpt) | NASA JSC | https://images.nasa.gov/details/jsc2022m000270_Orion_First_Imagery_Timelapse_and_Original_221117 | Public domain (NASA) |
+| sea.mp4 | Ocean surface waves 06, 2020 (4.6 s excerpt) | Mostafameraji | https://commons.wikimedia.org/wiki/File:Ocean_surface_waves_06.ogv | CC0 1.0 |
+| jelly.mp4 | Lion's mane jelly, Aquarium of the Pacific, 2023 (9 s excerpt) | Benoît Prieur | https://commons.wikimedia.org/wiki/File:VIDEO_Lion%27s_mane_jelly_Aquarium_of_the_Pacific_July_2023.webm | CC0 1.0 |
+
+NASA material follows NASA's media usage guidelines (https://www.nasa.gov/nasa-brand-center/images-and-media/); NASA does not endorse this site.
+
 ## Mediabunny 1.66.0
 
 Copyright (c) Vanilagy and contributors.

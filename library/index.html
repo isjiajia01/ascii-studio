@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library: ASCII art made with ASCII Studio</title>
+<meta name="description" content="Finished ASCII, braille, halftone and dither pieces set from public-domain photographs, paintings and film. Open any piece in the generator with the same picture and settings.">
+<meta name="theme-color" content="#0e0d0b">
+<link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../src/style.css"></head>
+<body class="is-lib">
+<nav class="nav site-nav" aria-label="Main">
+  <a class="brand" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 1v22M1 12h22" stroke="currentColor" stroke-width="1.5"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5H12z" fill="currentColor"/></svg>ASCII Studio</a>
+  <div class="links"><a href="../#styles">Styles</a><a href="./" aria-current="page">Library</a><a href="../#faq">FAQ</a></div>
+  <details class="menu" id="menu"><summary>Menu</summary><div class="menu-pop"><a href="../#styles">Styles</a><a href="./" aria-current="page">Library</a><a href="../#faq">FAQ</a></div></details>
+  <a class="btn primary" href="../app/"><span>Open<span class="wide-only"> the</span> generator</span></a>
+</nav>
+
+<main>
+<section class="wrap lib-head" aria-labelledby="h1">
+  <h1 id="h1">The library.</h1>
+  <div class="lib-intro">
+    <p class="lede">Finished pieces, set from public-domain photographs, paintings and film. Open one to compare it with the original and read its settings, then pull your own copy in the generator.</p>
+    <div class="lib-tools">
+      <div class="chips" id="filter" role="group" aria-label="Show"></div>
+      <button class="btn ghost" id="motion" type="button"><svg viewBox="0 0 12 12" aria-hidden="true"></svg><span class="lbl">Pause previews</span></button>
+    </div>
+  </div>
+</section>
+
+<section class="wrap lib-wall" aria-label="Works">
+  <ul class="wall" id="wall"></ul>
+  <p class="nogl-lib" id="noglLib" role="alert" hidden>The previews are drawn live and need WebGL2, which this browser does not offer. Try a recent Chrome, Edge, Firefox or Safari.</p>
+</section>
+
+<section class="wrap lib-credits" aria-labelledby="h-cred">
+  <h2 id="h-cred">Sources.</h2>
+  <div>
+    <p class="cred-lede">Every picture and clip here is in the public domain or under CC0, and the looks are straight from the generator: no retouching, nothing composited. NASA material is used under NASA’s media guidelines; NASA does not endorse this site.</p>
+    <ol class="cred-list" id="credits"></ol>
+  </div>
+</section>
+</main>
+
+<dialog class="viewer" id="viewer" aria-labelledby="vTitle">
+  <div class="v-bar">
+    <div class="v-nav">
+      <button class="btn icon" id="vPrev" type="button" aria-label="Previous work"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2L3.5 6l4 4"/></svg></button>
+      <button class="btn icon" id="vNext" type="button" aria-label="Next work"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2l4 4-4 4"/></svg></button>
+      <span class="data" id="vPos"></span>
+    </div>
+    <button class="btn" id="vClose" type="button" autofocus>Close <span class="k" aria-hidden="true">Esc</span></button>
+  </div>
+  <div class="v-stage">
+    <div class="v-view" id="vView">
+      <div class="plate cmp" id="vCmp" tabindex="0" role="slider" aria-label="Compare the look with the original" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+        <canvas id="vOrig" role="img" aria-label="Original"></canvas><canvas id="vOut" class="after" role="img" aria-label="The look"></canvas><div class="bar"><i></i></div>
+        <span class="tag l data">Look</span><span class="tag r data">Original</span>
+      </div>
+    </div>
+    <div class="v-tools">
+      <button class="btn" id="vPlay" type="button" hidden><svg viewBox="0 0 12 12" aria-hidden="true"></svg><span class="lbl">Pause</span></button>
+      <p class="data v-hint">Drag across the picture to compare<span class="hint-keys"> · arrow keys work too</span></p>
+    </div>
+  </div>
+  <div class="v-label">
+    <p class="data v-medium" id="vMedium"></p>
+    <h2 id="vTitle"></h2>
+    <p class="v-by" id="vBy"></p>
+    <p class="v-note" id="vNote"></p>
+    <dl class="v-set" id="vSet"></dl>
+    <a class="btn primary lg" id="vOpen" href="../app/">Open in the generator</a>
+    <p class="v-credit" id="vCredit"></p>
+  </div>
+</dialog>
+
+<footer><div class="wrap">
+  <span class="foot-name">ASCII Studio</span>
+  <nav class="foot-links" aria-label="Footer"><a href="../app/">Generator</a><a href="../#styles">Styles</a><a href="./">Library</a><a href="../#faq">FAQ</a></nav>
+  <p class="foot-credit">Set in Bricolage Grotesque and Martian Mono, both under the SIL Open Font License (<a href="../fonts/OFL-BricolageGrotesque.txt">Bricolage</a>, <a href="../fonts/OFL-MartianMono.txt">Martian</a>).</p>
+</div></footer>
+<script type="module" src="../src/library.ts"></script>
+</body></html>

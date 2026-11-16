@@ -7,3 +7,4 @@ Browser-only image/video to ASCII, braille, halftone, dither and bricks generato
 - Mediabunny (MPL-2.0) is used unmodified for MP4 export; keep `THIRD_PARTY_NOTICES.md` shipped with distributions.
 - No analytics, no uploads: everything stays in the browser. Do not add a backend or tracking.
 - Fonts in `public/fonts/` are self-hosted under their open licences; keep the licence files.
+- Library media in `public/works/` must be public domain or CC0, never competitor assets; record provenance in `src/works.ts` and `THIRD_PARTY_NOTICES.md`.

@@ -2,6 +2,7 @@ import { Renderer, fitSize, type SourceEl } from './engine/renderer';
 import { STYLES, STYLE_ORDER, PALETTES, PRESETS, DEFAULTS, applyPreset, type Params } from './engine/styles';
 import { getSample, SAMPLES } from './engine/samples';
 import { exportImage, exportVideo, download, videoExportSupported } from './engine/export';
+import { findWork, workParams, workUrl } from './works';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const view = $('view'), out = $<HTMLCanvasElement>('out'), orig = $<HTMLCanvasElement>('orig');
@@ -256,18 +257,21 @@ function setSource(el: SourceEl, w: number, h: number, kind: 'image' | 'video') 
   fillFormats(); syncExportState(); syncPresetUI(); renderThumbs(); markDirty();
 }
 function loadSample(i: number) { const c = getSample(i); srcName = SAMPLES[i % SAMPLES.length].id + '.png'; setSource(c, c.width, c.height, 'image'); }
-async function loadFile(f: File) {
-  srcName = f.name;
-  const url = URL.createObjectURL(f);
-  if (f.type.startsWith('video/')) {
+/** Opens a picture or a video from a URL: a dropped file (blob URL) or a Library work (same-origin file). */
+async function openMedia(url: string, video: boolean) {
+  if (video) {
     const v = document.createElement('video'); v.muted = true; v.loop = true; v.playsInline = true; v.preload = 'auto'; v.src = url;
     await new Promise<void>((res, rej) => { v.onloadeddata = () => res(); v.onerror = () => rej(new Error('video')); });
     setSource(v, v.videoWidth, v.videoHeight, 'video'); void v.play(); bindVideo(v);
   } else {
     const img = new Image(); img.src = url;
-    try { await img.decode(); } catch { msg.textContent = 'Could not read that file.'; return; }
+    await img.decode();
     setSource(img, img.naturalWidth, img.naturalHeight, 'image');
   }
+}
+async function loadFile(f: File) {
+  srcName = f.name;
+  try { await openMedia(URL.createObjectURL(f), f.type.startsWith('video/')); } catch { msg.textContent = 'Could not read that file.'; }
 }
 const play = $<HTMLButtonElement>('play'), scrub = $<HTMLInputElement>('scrub'), timeEl = $('time');
 const PLAY_ICON = '<path d="M3 1.5v9l7.5-4.5z"/>', PAUSE_ICON = '<path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/>';
@@ -356,9 +360,13 @@ let rt: number; window.addEventListener('resize', () => { clearTimeout(rt); rt =
 const q = new URLSearchParams(location.search);
 const qp = q.get('preset'); if (qp && PRESETS.some(x => x.id === qp)) { p = applyPreset(p, qp); activePreset = qp; }
 const qs = q.get('style'); if (qs && qs in STYLES) { p.style = qs as Params['style']; activePreset = null; }
+// Library deep link (?work=<id>): the work's own file with its settings. A tuned work marks no preset as chosen.
+const work = findWork(q.get('work'));
+if (work) { p = workParams(work); activePreset = work.tweak ? null : work.preset; }
 refreshAll(); syncPresetUI(); fillFormats(); syncExportState();
-if (renderer && !q.has('sample')) renderThumbs();
-if (renderer && q.has('sample')) loadSample(parseInt(q.get('sample')!) || 0);
+if (renderer && !q.has('sample') && !work) renderThumbs();
+if (renderer && work) { srcName = work.file; openMedia(workUrl(work), work.kind === 'video').catch(() => { renderThumbs(); msg.textContent = 'Could not load ' + work.file + '.'; }); }
+else if (renderer && q.has('sample')) loadSample(parseInt(q.get('sample')!) || 0);
 
 /* ---------- cues ---------- */
 // Preset strip: edge fades and pager buttons show that more presets sit off-screen.
