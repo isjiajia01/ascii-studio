@@ -55,10 +55,67 @@ function orbs(): HTMLCanvasElement {
   return c;
 }
 
+/** A bright, high-contrast subject for the landing proofs: a striped balloon in a dusk sky (added for the landing redesign). */
+function balloon(): HTMLCanvasElement {
+  const [c, x] = mk(); const r = rnd(11);
+  let g = x.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#070b14'); g.addColorStop(.45, '#16223a'); g.addColorStop(.8, '#3a2f44'); g.addColorStop(1, '#6a4840');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  g = x.createRadialGradient(840, 760, 10, 840, 760, 300); g.addColorStop(0, 'rgba(255,190,120,.6)'); g.addColorStop(1, 'rgba(255,160,110,0)');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  // distant hills
+  x.fillStyle = '#2a2232'; x.beginPath(); x.moveTo(0, H);
+  for (let i = 0; i <= 20; i++) x.lineTo(i * 50, 690 + Math.sin(i * .7) * 22 + Math.sin(i * 1.9) * 9);
+  x.lineTo(W, H); x.fill();
+  x.fillStyle = '#120e16'; x.beginPath(); x.moveTo(0, H);
+  for (let i = 0; i <= 20; i++) x.lineTo(i * 50, 745 + Math.sin(i * .45 + 2) * 26);
+  x.lineTo(W, H); x.fill();
+  const envelope = (cx: number, top: number, R: number, cy: number, mouthY: number, m: number, cols: string[]) => {
+    const shape = () => { x.beginPath(); x.moveTo(cx, top); x.bezierCurveTo(cx + R * 1.38, top, cx + R * 1.12, cy + R * .55, cx + m, mouthY); x.lineTo(cx - m, mouthY); x.bezierCurveTo(cx - R * 1.12, cy + R * .55, cx - R * 1.38, top, cx, top); x.closePath(); };
+    x.save(); shape(); x.clip();
+    const n = 10;
+    for (let k = 0; k < n; k++) {
+      const a0 = -Math.PI / 2 + Math.PI * k / n, a1 = -Math.PI / 2 + Math.PI * (k + 1) / n;
+      const s0 = Math.sin(a0), s1 = Math.sin(a1);
+      x.fillStyle = cols[k % cols.length]; x.beginPath();
+      x.moveTo(cx, top - 4);
+      x.bezierCurveTo(cx + R * 1.3 * s0, top, cx + R * 1.15 * s0, cy + R * .5, cx + m * s0, mouthY + 2);
+      x.lineTo(cx + m * s1, mouthY + 2);
+      x.bezierCurveTo(cx + R * 1.15 * s1, cy + R * .5, cx + R * 1.3 * s1, top, cx, top - 4);
+      x.fill();
+    }
+    let sg = x.createRadialGradient(cx - R * .4, cy - R * .45, R * .05, cx - R * .1, cy - R * .1, R * 1.25);
+    sg.addColorStop(0, 'rgba(255,250,235,.6)'); sg.addColorStop(.3, 'rgba(255,250,235,.12)'); sg.addColorStop(.72, 'rgba(10,6,20,.12)'); sg.addColorStop(1, 'rgba(10,6,20,.7)');
+    x.fillStyle = sg; x.fillRect(cx - R * 2, top - 10, R * 4, mouthY - top + 20);
+    sg = x.createLinearGradient(cx - R, 0, cx + R, 0); sg.addColorStop(.6, 'rgba(20,10,30,0)'); sg.addColorStop(1, 'rgba(20,10,30,.45)');
+    x.fillStyle = sg; x.fillRect(cx - R * 2, top - 10, R * 4, mouthY - top + 20);
+    x.restore();
+  };
+  // far balloon, then the main one
+  envelope(810, 170, 46, 215, 285, 9, ['#e0543a', '#f6e9cc']);
+  x.strokeStyle = 'rgba(200,170,140,.6)'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(802, 285); x.lineTo(805, 300); x.moveTo(818, 285); x.lineTo(815, 300); x.stroke();
+  x.fillStyle = '#6a4a32'; x.fillRect(803, 299, 14, 11);
+  const cx = 390, top = 70, R = 205, cy = 320, mouthY = 590, m = 40;
+  envelope(cx, top, R, cy, mouthY, m, ['#d63a2f', '#f4e7c9', '#f0b233', '#f4e7c9', '#22406e']);
+  x.fillStyle = '#6a4a32'; x.fillRect(cx - m, mouthY - 2, m * 2, 10);
+  x.strokeStyle = '#b08a64'; x.lineWidth = 3; x.beginPath();
+  x.moveTo(cx - m + 4, mouthY + 6); x.lineTo(cx - 24, 650); x.moveTo(cx + m - 4, mouthY + 6); x.lineTo(cx + 24, 650);
+  x.moveTo(cx - 8, mouthY + 8); x.lineTo(cx - 8, 650); x.moveTo(cx + 8, mouthY + 8); x.lineTo(cx + 8, 650); x.stroke();
+  g = x.createLinearGradient(cx - 30, 0, cx + 30, 0); g.addColorStop(0, '#d8a066'); g.addColorStop(.5, '#a8743f'); g.addColorStop(1, '#5a3a20');
+  x.fillStyle = g; x.fillRect(cx - 30, 648, 60, 44);
+  x.fillStyle = 'rgba(0,0,0,.25)'; for (let i = 0; i < 4; i++) x.fillRect(cx - 30, 656 + i * 10, 60, 2);
+  // photographic grain
+  const im = x.getImageData(0, 0, W, H), d = im.data;
+  for (let i = 0; i < d.length; i += 4) { const n = (r() - .5) * 14; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  x.putImageData(im, 0, 0);
+  return c;
+}
+
 export const SAMPLES = [
   { id: 'rocket', name: 'Rocket', make: rocket },
   { id: 'sunset', name: 'Sunset', make: sunset },
   { id: 'orbs', name: 'Orbs', make: orbs },
+  { id: 'balloon', name: 'Balloon', make: balloon },
 ];
 const cache = new Map<string, HTMLCanvasElement>();
 export function getSample(i: number): HTMLCanvasElement {

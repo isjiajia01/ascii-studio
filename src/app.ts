@@ -5,7 +5,7 @@ import { exportImage, exportVideo, download, videoExportSupported } from './engi
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const view = $('view'), out = $<HTMLCanvasElement>('out'), orig = $<HTMLCanvasElement>('orig');
-const drop = $('drop'), panel = $('panel'), presetsEl = $('presets'), transport = $('transport');
+const drop = $('drop'), panel = $('panel'), presetsEl = $('presets'), transport = $('transport'), app = $('app');
 const fileIn = $<HTMLInputElement>('file');
 
 let p: Params = { ...DEFAULTS };
@@ -82,37 +82,47 @@ refreshers.push(() => {
   styleDesc.textContent = STYLES[p.style].desc; customWrap.style.display = p.style === 'custom' ? '' : 'none'; customIn.value = p.custom;
 });
 
-const sImg = sec('Picture');
+// Short desktop windows: start Picture closed so the effect groups are not pushed under the export block.
+const sImg = sec('Picture', !matchMedia('(min-width:861px) and (max-height:859px)').matches);
 slider(sImg, 'detail', 'Detail', 16, 360, 1, v => String(v));
 slider(sImg, 'contrast', 'Contrast', 0.4, 2.4, 0.01);
 slider(sImg, 'brightness', 'Brightness', -0.5, 0.5, 0.01);
 toggle(sImg, 'invert', 'Invert');
 
-const sCol = sec('Colour');
+const sCol = sec('Colour', false);
+const colVal = sCol.closest('details')!.querySelector('summary')!.insertBefore(document.createElement('span'), sCol.closest('details')!.querySelector('.mod'));
+colVal.className = 'val data';
 const seg = document.createElement('div'); seg.className = 'seg';
 seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Colour mode');
 const modes: [Params['colorMode'], string][] = [['mono', 'Mono'], ['source', 'Picture'], ['palette', 'Palette']];
 const segBtns = modes.map(([m, n]) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { p.colorMode = m; touched(); refreshAll(); }; seg.appendChild(b); return [m, b] as const; });
 sCol.appendChild(seg);
-const sw = document.createElement('div'); sw.className = 'swatches';
+// Palette swatches only matter in Palette mode, Ink only in Mono; Background applies to every mode.
+const palWrap = document.createElement('div'); palWrap.className = 'pal';
+palWrap.innerHTML = '<div class="swatches" role="group" aria-label="Palette"></div><p class="pal-name"><span class="data">Palette</span> <span></span></p>';
+const sw = palWrap.querySelector<HTMLElement>('.swatches')!, palName = palWrap.querySelector<HTMLElement>('.pal-name span:last-child')!;
 const swBtns = Object.entries(PALETTES).map(([id, pal]) => {
-  const b = document.createElement('button'); b.className = 'sw1'; b.title = pal.name; b.setAttribute('aria-label', pal.name + ' palette');
+  const b = document.createElement('button'); b.className = 'sw1'; b.title = pal.name; b.setAttribute('aria-label', pal.name);
   b.style.background = 'linear-gradient(90deg,' + pal.c.join(',') + ')';
-  b.onclick = () => { p.palette = id; p.colorMode = 'palette'; touched(); refreshAll(); }; sw.appendChild(b); return [id, b] as const;
+  b.onclick = () => { p.palette = id; touched(); refreshAll(); }; sw.appendChild(b); return [id, b] as const;
 });
-sCol.appendChild(sw);
+sCol.appendChild(palWrap);
 const cols = document.createElement('div'); cols.className = 'colors';
-cols.innerHTML = '<label>Ink <input type="color" id="fg"></label><label>Background <input type="color" id="bg"></label>';
+cols.innerHTML = '<label id="fgwrap">Ink <input type="color" id="fg"></label><label>Background <input type="color" id="bg"></label>';
 sCol.appendChild(cols);
+const fgWrap = cols.querySelector<HTMLElement>('#fgwrap')!;
 const fgIn = cols.querySelector<HTMLInputElement>('#fg')!, bgIn = cols.querySelector<HTMLInputElement>('#bg')!;
 fgIn.oninput = () => { p.fg = fgIn.value; touched(); }; bgIn.oninput = () => { p.bg = bgIn.value; touched(); };
 refreshers.push(() => {
   segBtns.forEach(([m, b]) => { b.classList.toggle('on', p.colorMode === m); b.setAttribute('aria-pressed', String(p.colorMode === m)); });
-  swBtns.forEach(([id, b]) => { const on = p.colorMode === 'palette' && p.palette === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  swBtns.forEach(([id, b]) => { const on = p.palette === id; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); });
+  palWrap.hidden = p.colorMode !== 'palette'; fgWrap.hidden = p.colorMode !== 'mono';
+  palName.textContent = (PALETTES[p.palette] || PALETTES.green).name;
+  colVal.textContent = modes.find(([m]) => m === p.colorMode)![1];
   fgIn.value = p.fg; bgIn.value = p.bg;
 });
 
-const sOut = sec('Outlines & glow', true, ['outlines', 'glow']);
+const sOut = sec('Outlines & glow', false, ['outlines', 'glow']);
 slider(sOut, 'outlines', 'Outlines', 0, 100, 1); slider(sOut, 'glow', 'Glow', 0, 100, 1);
 const sScr = sec('Old screen', false, ['scanlines', 'crt', 'aberration', 'grain', 'flicker']);
 slider(sScr, 'scanlines', 'Scanlines', 0, 100, 1); slider(sScr, 'crt', 'CRT curve', 0, 100, 1);
@@ -122,26 +132,47 @@ toggle(sMot, 'animate', 'Animate'); slider(sMot, 'speed', 'Speed', 0.1, 4, 0.1);
 
 /* export */
 const sExp = document.createElement('section'); sExp.className = 'exp'; sExp.setAttribute('aria-label', 'Export'); panel.appendChild(sExp);
-sExp.insertAdjacentHTML('beforeend', '<div class="two"><label class="f">Format<select id="fmt"></select></label>' +
-  '<label class="f">Size<select id="size"><option value="1280">720p · 1280</option><option value="1920" selected>1080p · 1920</option><option value="3840">4K · 3840</option></select></label></div>' +
+sExp.insertAdjacentHTML('beforeend', '<h2 class="vh">Export</h2><div class="exp-row"><select id="fmt" aria-label="Format" aria-describedby="msg"></select>' +
+  '<select id="size" aria-label="Size, long edge" aria-describedby="msg"><option value="1280">1280 px</option><option value="1920" selected>1920 px</option><option value="3840">3840 px</option></select>' +
+  '<button class="btn primary" id="export">Export</button><button class="btn" id="cancel" hidden>Cancel</button></div>' +
   '<label class="ctl sw" id="trwrap"><span>Transparent background</span><input type="checkbox" class="switch" id="tr"></label>' +
-  '<div class="row"><button class="btn primary" id="export">Export</button><button class="btn" id="cancel" hidden>Cancel</button></div>' +
-  '<progress id="prog" max="1" value="0" hidden aria-label="Export progress"></progress><p class="msg" id="msg" aria-live="polite">Free, no watermark. Rendered on your device.</p>');
+  '<progress id="prog" max="1" value="0" hidden aria-label="Export progress"></progress><p class="msg" id="msg" aria-live="polite"></p>');
 const fmtSel = $<HTMLSelectElement>('fmt'), sizeSel = $<HTMLSelectElement>('size'), trIn = $<HTMLInputElement>('tr');
 const prog = $<HTMLProgressElement>('prog'), msg = $('msg'), expBtn = $<HTMLButtonElement>('export'), cancelBtn = $<HTMLButtonElement>('cancel');
+const toExp = $<HTMLButtonElement>('toExport');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Phone layout: the export block sits at the end of the controls, so the pinned toolbar carries a jump to it.
+toExp.onclick = () => { sExp.scrollIntoView({ block: 'end', behavior: reduceMotion ? 'auto' : 'smooth' }); expBtn.focus({ preventScroll: true }); };
 function fillFormats() {
   const v = src?.kind === 'video';
-  const opts = (v ? [['mp4', 'MP4 video'], ['jpeg', 'JPEG (current frame)'], ['webp', 'WebP (current frame)']] : [['jpeg', 'JPEG'], ['webp', 'WebP']]);
+  const opts = (v ? [['mp4', 'MP4'], ['jpeg', 'JPEG'], ['webp', 'WebP']] : [['jpeg', 'JPEG'], ['webp', 'WebP']]);
   fmtSel.innerHTML = opts.map(o => '<option value="' + o[0] + '">' + o[1] + '</option>').join('');
   fmtChanged();
 }
-function fmtChanged() { $('trwrap').style.display = fmtSel.value === 'webp' ? '' : 'none'; }
+const SIZE_NAME: Record<string, string> = { '1280': '720p', '1920': '1080p', '3840': '4K' };
+/** The line under the export row says what the two selects mean, so the size is never a bare number. */
+function expHint() {
+  msg.classList.remove('err');
+  if (!src) { msg.textContent = 'Add a picture to export.'; return; }
+  const f = fmtSel.value, name = f === 'webp' ? 'WebP' : f.toUpperCase();
+  const what = f !== 'mp4' && src.kind === 'video' ? name + ' of this frame' : name;
+  msg.textContent = what + ' · long edge ' + sizeSel.value + ' px (' + SIZE_NAME[sizeSel.value] + ')';
+}
+function fmtChanged() { $('trwrap').style.display = fmtSel.value === 'webp' ? '' : 'none'; expHint(); }
 fmtSel.onchange = fmtChanged;
+sizeSel.onchange = expHint;
+/** Empty state: nothing to export yet, so the export controls are off and say why. */
+function syncExportState() {
+  const none = !src;
+  [expBtn, fmtSel, sizeSel, trIn, toExp].forEach(el => { el.disabled = none; });
+  app.classList.toggle('is-empty', none);
+  expHint();
+}
 let abort: AbortController | null = null;
 cancelBtn.onclick = () => abort?.abort();
 expBtn.onclick = async () => {
   msg.classList.remove('err');
-  if (!src) { msg.textContent = 'Add a picture or video first.'; msg.classList.add('err'); return; }
+  if (!src) { expHint(); return; }
   const edge = parseInt(sizeSel.value), fmt = fmtSel.value;
   expBtn.disabled = true; prog.hidden = true; msg.textContent = 'Rendering…';
   const name = 'ascii-' + p.style;
@@ -154,7 +185,7 @@ expBtn.onclick = async () => {
       download(blob, name + '.mp4'); msg.textContent = 'Saved MP4 (' + (blob.size / 1048576).toFixed(1) + ' MB).';
     } else {
       const { blob, ext } = await exportImage(src.el, src.w, src.h, { ...p, transparent: trIn.checked }, edge, fmt as 'jpeg' | 'webp', p.animate || src.kind === 'video' ? clock : 0);
-      download(blob, name + '.' + ext); msg.textContent = 'Saved ' + ext.toUpperCase() + ' (' + Math.round(blob.size / 1024) + ' KB).';
+      download(blob, name + '.' + ext); msg.textContent = 'Saved ' + (ext === 'webp' ? 'WebP' : ext.toUpperCase()) + ' (' + Math.round(blob.size / 1024) + ' KB).';
     }
   } catch (e) {
     const aborted = (e as Error).name === 'AbortError';
@@ -172,13 +203,14 @@ const presetCards = PRESETS.map(pr => {
   presetsEl.appendChild(b); return { pr, b, c: b.querySelector('canvas')! };
 });
 function syncPresetUI() {
-  presetCards.forEach(({ pr, b }) => { const on = pr.id === activePreset; b.classList.toggle('on', on); b.classList.toggle('marked', on); b.setAttribute('aria-pressed', String(on)); });
+  // The marker loop means "your picture, in this preset": it only appears once there is a picture.
+  presetCards.forEach(({ pr, b }) => { const on = pr.id === activePreset; b.classList.toggle('on', on && !!src); b.classList.toggle('marked', on && !!src); b.setAttribute('aria-pressed', String(on)); });
 }
 let thumbAt = 0;
 function renderThumbs() {
   if (!thumbR) return;
   // Before a picture is added, the strip previews every preset on the first sample.
-  const s = src ?? (() => { const c = getSample(0); return { el: c as SourceEl, w: c.width, h: c.height }; })();
+  const s = src ?? (() => { const c = getSample(3); return { el: c as SourceEl, w: c.width, h: c.height }; })();
   thumbR.setSource(s.el, s.w, s.h);
   const [w, h] = fitSize(s.w / s.h, 132);
   for (const { pr, c } of presetCards) {
@@ -196,8 +228,9 @@ const plate = $('plate'), slugEl = $('slug'), srcInfo = $('srcInfo');
 function syncSlug() {
   if (!src) return;
   const style = STYLES[p.style].name, preset = PRESETS.find(x => x.id === activePreset)?.name;
-  slugEl.innerHTML = '<b></b> · ' + (preset ? preset + ' preset · ' : '') + style + ' · detail ' + p.detail;
-  slugEl.querySelector('b')!.textContent = srcName;
+  // The file name lives in the nav; the slug carries only what the controls changed.
+  // Names come from the static preset/style tables, never from user input.
+  slugEl.innerHTML = preset ? '<b>' + preset + '</b> preset · ' + style + ' · detail ' + p.detail : '<b>' + style + '</b> · detail ' + p.detail;
   srcInfo.innerHTML = '<b></b> · ' + src.w + '×' + src.h + ' · ' + src.kind;
   srcInfo.querySelector('b')!.textContent = srcName;
 }
@@ -211,7 +244,8 @@ function setSource(el: SourceEl, w: number, h: number, kind: 'image' | 'video') 
   plate.style.setProperty('--ar', String(w / h));
   transport.hidden = kind !== 'video';
   syncSlug();
-  fillFormats(); renderThumbs(); markDirty();
+  $('stripNote').textContent = 'Your picture in every preset.';
+  fillFormats(); syncExportState(); syncPresetUI(); renderThumbs(); markDirty();
 }
 function loadSample(i: number) { const c = getSample(i); srcName = SAMPLES[i % SAMPLES.length].id + '.png'; setSource(c, c.width, c.height, 'image'); }
 async function loadFile(f: File) {
@@ -239,8 +273,9 @@ function bindVideo(v: HTMLVideoElement) {
 }
 $('browse').onclick = () => fileIn.click(); $('replace').onclick = () => fileIn.click();
 fileIn.onchange = () => { const f = fileIn.files?.[0]; if (f) void loadFile(f); fileIn.value = ''; };
-$('samples').innerHTML = SAMPLES.map((s, i) => '<button class="sample" data-s="' + i + '"><canvas width="240" height="192" aria-hidden="true"></canvas>' + s.name + '</button>').join('');
-$('samples').querySelectorAll('canvas').forEach((c, i) => c.getContext('2d')!.drawImage(getSample(i), 0, 0, c.width, c.height));
+const sampleOrder = [3, 0, 1, 2].filter(i => i < SAMPLES.length);
+$('samples').innerHTML = sampleOrder.map(i => '<button class="sample" data-s="' + i + '"><canvas width="240" height="192" aria-hidden="true"></canvas>' + SAMPLES[i].name + '</button>').join('');
+$('samples').querySelectorAll('canvas').forEach((c, k) => c.getContext('2d')!.drawImage(getSample(sampleOrder[k]), 0, 0, c.width, c.height));
 $('samples').onclick = e => { const b = (e.target as HTMLElement).closest('[data-s]') as HTMLElement | null; if (b) loadSample(+b.dataset.s!); };
 for (const t of ['dragenter', 'dragover']) window.addEventListener(t, e => { e.preventDefault(); drop.classList.add('over'); });
 for (const t of ['dragleave', 'drop']) window.addEventListener(t, e => { e.preventDefault(); drop.classList.remove('over'); });
@@ -279,6 +314,7 @@ divider.addEventListener('keydown', e => {
   e.preventDefault();
 });
 const cmpBtn = $('compare');
+cmpBtn.addEventListener('contextmenu', e => e.preventDefault()); // long-press on touch must not open a menu
 ['pointerdown'].forEach(t => cmpBtn.addEventListener(t, () => showOrig(true)));
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => cmpBtn.addEventListener(t, () => showOrig(false)));
 window.addEventListener('keydown', e => { if (e.key.toLowerCase() === 'c' && !e.repeat && !(e.target as HTMLElement).matches('input,select')) showOrig(true); });
@@ -306,6 +342,26 @@ let rt: number; window.addEventListener('resize', () => { clearTimeout(rt); rt =
 const q = new URLSearchParams(location.search);
 const qp = q.get('preset'); if (qp && PRESETS.some(x => x.id === qp)) { p = applyPreset(p, qp); activePreset = qp; }
 const qs = q.get('style'); if (qs && qs in STYLES) { p.style = qs as Params['style']; activePreset = null; }
-refreshAll(); syncPresetUI(); fillFormats();
+refreshAll(); syncPresetUI(); fillFormats(); syncExportState();
 if (renderer && !q.has('sample')) renderThumbs();
 if (renderer && q.has('sample')) loadSample(parseInt(q.get('sample')!) || 0);
+
+/* ---------- cues ---------- */
+// Preset strip: edge fades and pager buttons show that more presets sit off-screen.
+const prevP = $<HTMLButtonElement>('prevP'), nextP = $<HTMLButtonElement>('nextP');
+function syncStrip() {
+  const atStart = presetsEl.scrollLeft < 4, atEnd = presetsEl.scrollLeft + presetsEl.clientWidth >= presetsEl.scrollWidth - 4;
+  presetsEl.classList.toggle('fade-l', !atStart); presetsEl.classList.toggle('fade-r', !atEnd);
+  prevP.disabled = atStart; nextP.disabled = atEnd;
+}
+const page = (dir: number) => presetsEl.scrollBy({ left: dir * presetsEl.clientWidth * 0.8, behavior: reduceMotion ? 'auto' : 'smooth' });
+prevP.onclick = () => page(-1); nextP.onclick = () => page(1);
+presetsEl.addEventListener('scroll', syncStrip, { passive: true });
+// Control rail: a fade above the pinned export block while more controls sit below it.
+function syncRail() { panel.classList.toggle('more', panel.scrollTop + panel.clientHeight < panel.scrollHeight - 4); }
+panel.addEventListener('scroll', syncRail, { passive: true });
+panel.addEventListener('toggle', syncRail, true);
+new ResizeObserver(() => { syncStrip(); syncRail(); }).observe(document.body);
+syncStrip(); syncRail();
+// Leaving the page drops the picture and every setting, so ask first once there is work to lose.
+window.addEventListener('beforeunload', e => { if (src) { e.preventDefault(); e.returnValue = ''; } });

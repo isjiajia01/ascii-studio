@@ -5,47 +5,51 @@
 <link rel="stylesheet" href="../src/style.css"></head>
 <body class="is-app">
 <nav class="nav app-nav" aria-label="Main">
-  <a class="brand" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 1v22M1 12h22" stroke="currentColor" stroke-width="1.5"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5H12z" fill="currentColor"/></svg>ASCII Studio</a>
+  <a class="brand" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 1v22M1 12h22" stroke="currentColor" stroke-width="1.5"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5H12z" fill="currentColor"/></svg><span class="brand-name">ASCII Studio</span></a>
   <span class="src data" id="srcInfo">No picture yet</span>
   <div class="end-tools">
-    <div class="links"><a href="../#styles">Styles</a><a href="../#faq">Help</a></div>
+    <div class="links"><a href="../#styles" target="_blank" rel="noopener">Styles<span class="vh"> (opens in a new tab)</span></a><a href="../#faq" target="_blank" rel="noopener">Help<span class="vh"> (opens in a new tab)</span></a></div>
     <button class="btn" id="replace">Open file</button>
   </div>
 </nav>
-<div class="app">
-  <main class="main">
-    <div class="stage">
-      <div class="view empty" id="view">
-        <div class="plate" id="plate">
-          <canvas id="out" role="img" aria-label="ASCII output"></canvas><canvas id="orig" role="img" aria-label="Original picture"></canvas>
-          <button class="divider" id="divider" role="slider" aria-label="Split position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><i></i></button>
-          <span class="tag l data">Output</span><span class="tag r data">Original</span>
-        </div>
-        <div class="drop" id="drop">
-          <h2>Drop in a picture.</h2>
-          <p>An image or a video. <span class="hint-desk">Drag it here or paste it from your clipboard.</span> Nothing is uploaded; it all runs in your browser.</p>
-          <button class="btn primary lg" id="browse">Choose a file</button>
-          <span class="or">or start from a sample</span>
-          <div class="samples" id="samples"></div>
-          <p id="glmsg" role="alert" hidden>This tool needs WebGL2, which this browser does not offer. Try a recent Chrome, Edge, Firefox or Safari.</p>
-        </div>
+<!-- One grid holds the stage, the preset strip and the control rail, so on a phone the pinned stage stays pinned for the whole control list. -->
+<main class="app is-empty" id="app">
+  <div class="stage">
+    <div class="view empty" id="view">
+      <div class="plate" id="plate">
+        <canvas id="out" role="img" aria-label="ASCII output"></canvas><canvas id="orig" role="img" aria-label="Original picture"></canvas>
+        <button class="divider" id="divider" role="slider" aria-label="Split position" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><i></i></button>
+        <span class="tag l data">Output</span><span class="tag r data">Original</span>
       </div>
-      <div class="toolbar">
-        <span class="slug data" id="slug" aria-live="polite">Add a picture to begin</span>
-        <div class="tools">
-          <button class="btn" id="compare" disabled title="Hold to see the original (or hold C)">Hold to compare <span class="k" aria-hidden="true">C</span></button>
-          <button class="btn" id="split" disabled aria-pressed="false" title="Show output and original side by side">Split</button>
-        </div>
+      <div class="drop" id="drop">
+        <h2>Drop in a picture.</h2>
+        <p>An image or a video. <span class="hint-desk">Drag it here or paste it from your clipboard.</span> Nothing is uploaded; it all runs in your browser.</p>
+        <button class="btn primary lg" id="browse">Choose a file</button>
+        <span class="or">or start from a sample</span>
+        <div class="samples" id="samples"></div>
+        <p id="glmsg" role="alert" hidden>This tool needs WebGL2, which this browser does not offer. Try a recent Chrome, Edge, Firefox or Safari.</p>
       </div>
-      <div class="transport" id="transport" hidden><button class="btn" id="play">Pause</button><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position"><span class="data" id="time">0:00 / 0:00</span></div>
     </div>
-    <section class="strip" aria-labelledby="h-presets">
-      <div class="strip-head"><h2 id="h-presets">Presets</h2><p>Your picture in every preset. Click one to apply it.</p></div>
-      <div class="presets" id="presets"></div>
-    </section>
-  </main>
-  <aside class="panel" id="panel" aria-label="Controls"></aside>
-</div>
+    <div class="toolbar">
+      <span class="slug data" id="slug" aria-live="polite">Add a picture to begin</span>
+      <div class="tools">
+        <button class="btn" id="compare" disabled title="Hold to see the original (or hold C)">Hold to compare <span class="k" aria-hidden="true">C</span></button>
+        <button class="btn" id="split" disabled aria-pressed="false" title="Show output and original side by side">Split</button>
+        <button class="btn primary to-exp" id="toExport" disabled>Export</button>
+      </div>
+    </div>
+    <div class="transport" id="transport" hidden><button class="btn" id="play">Pause</button><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position"><span class="data" id="time">0:00 / 0:00</span></div>
+  </div>
+  <section class="strip" aria-labelledby="h-presets">
+    <div class="strip-head">
+      <h2 id="h-presets">Presets <span class="n data">19</span></h2>
+      <p id="stripNote">Previewed on a sample until you add a picture.</p>
+      <div class="pager"><button class="btn icon" id="prevP" aria-label="Earlier presets"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.5 2L3.5 6l4 4"/></svg></button><button class="btn icon" id="nextP" aria-label="More presets"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2l4 4-4 4"/></svg></button></div>
+    </div>
+    <div class="presets" id="presets"></div>
+  </section>
+  <section class="panel" id="panel" aria-label="Controls"></section>
+</main>
 <input type="file" id="file" accept="image/*,video/*" hidden>
 <script type="module" src="../src/app.ts"></script>
 </body></html>

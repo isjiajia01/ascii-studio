@@ -6,54 +6,58 @@
 <link rel="preload" href="/fonts/bricolage-grotesque-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="./src/style.css"></head>
 <body>
-<nav class="nav" aria-label="Main">
+<nav class="nav site-nav" aria-label="Main">
   <a class="brand" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M12 1v22M1 12h22" stroke="currentColor" stroke-width="1.5"/><path d="M12 5.5a6.5 6.5 0 0 1 6.5 6.5H12z" fill="currentColor"/></svg>ASCII Studio</a>
-  <div class="links"><a class="opt" href="#styles">Styles</a><a class="opt" href="#features">Finishing</a><a class="opt" href="#faq">FAQ</a></div>
-  <a class="btn primary" href="./app/">Open the generator</a>
+  <div class="links"><a href="#styles">Styles</a><a href="#features">Tuning</a><a href="#faq">FAQ</a></div>
+  <details class="menu" id="menu"><summary>Menu</summary><div class="menu-pop"><a href="#styles">Styles</a><a href="#features">Tuning</a><a href="#faq">FAQ</a></div></details>
+  <a class="btn primary" href="./app/"><span>Open<span class="wide-only"> the</span> generator</span></a>
 </nav>
 
 <main>
 <section class="wrap hero" aria-labelledby="h1">
   <div class="hero-copy">
     <h1 id="h1">Set any picture in&nbsp;type.</h1>
-    <p class="lede">Drop in an image or a video and rebuild it from <b>ASCII characters, braille, halftone dots, dither or bricks</b>. It all runs in your browser, so nothing is uploaded.</p>
+    <p class="lede">Drop in a photo or a video and watch it rebuild itself from characters, dots or&nbsp;bricks.</p>
     <div class="row"><a class="btn primary lg" href="./app/">Open the generator</a><a class="btn ghost lg" href="#styles">See the styles</a></div>
-    <ul class="facts"><li>Free, no watermark</li><li>Nothing uploaded</li><li>Video to MP4</li></ul>
+    <ul class="facts"><li>No watermark</li><li>Nothing uploaded</li><li>Video to MP4</li></ul>
   </div>
   <figure class="proof" style="position:relative">
-    <div class="plate cmp" id="heroCmp" tabindex="0" role="slider" aria-label="Compare output with original" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
+    <div class="plate cmp" id="heroCmp" tabindex="0" role="slider" aria-label="Compare output with original" aria-valuemin="0" aria-valuemax="100" aria-valuenow="68">
       <canvas id="heroOrig"></canvas><canvas id="heroOut" class="after"></canvas><div class="bar"><i></i></div>
       <span class="tag l data">Output</span><span class="tag r data">Original</span>
     </div>
     <figcaption class="slug">
-      <span class="data" id="heroSlug"><b>Classic</b> · rocket.png · live</span>
+      <span class="data" id="heroSlug"><b>Detailed colour</b> · balloon.png · live</span>
       <div class="chips" id="heroPills" role="group" aria-label="Preview style"></div>
     </figcaption>
     <div class="nogl"><p>The live preview needs WebGL2. Try a recent Chrome, Edge, Firefox or Safari.</p></div>
   </figure>
 </section>
 
-<section class="process" id="how" aria-label="How it works"><div class="wrap">
+<section class="process" id="how" aria-labelledby="h-how"><div class="wrap">
+  <h2 class="vh" id="h-how">How it works</h2>
   <ol class="steps">
-    <li><span class="data">Step 1</span><h3>Drop in</h3><p>A photo or a video. Drag it in, paste it, or start from a sample.</p></li>
-    <li><span class="data">Step 2</span><h3>Pick</h3><p>One of fourteen styles or nineteen presets, then tune it live.</p></li>
-    <li><span class="data">Step 3</span><h3>Export</h3><p>A JPEG, transparent WebP or MP4. No account, no watermark.</p></li>
+    <li><div class="frame"><canvas id="step1" role="img" aria-label="The original photo"></canvas></div><h3>Drop in</h3><p>A photo or a video. Drag it in, paste it, or start from a sample.</p></li>
+    <li><div class="frame"><canvas id="step2" role="img" aria-label="The same photo in three styles"></canvas></div><h3>Pick</h3><p>One of fourteen styles or nineteen presets, then tune it live.</p></li>
+    <li><div class="frame"><canvas id="step3" role="img" aria-label="The finished picture"></canvas><span class="tag l data">ascii-dots.jpg · 1920 px</span></div><h3>Export</h3><p>A JPEG, a transparent WebP or an MP4. No account, no watermark.</p></li>
   </ol>
 </div></section>
 
 <section class="specimen" id="styles" aria-labelledby="h-styles"><div class="wrap">
-  <div class="sec-head"><h2 id="h-styles">One picture, many textures.</h2><p>Pick a style to proof it on a sample, then drag across the picture to compare it with the original.</p></div>
+  <div class="sec-head"><h2 id="h-styles">One picture, many textures.</h2><p>Pick a style to proof it on the same picture, then drag across the proof to compare it with the original.</p></div>
   <div class="spec-body">
-    <ol class="spec-index" id="gallery" aria-label="Styles"></ol>
+    <div class="spec-side">
+      <ol class="spec-index" id="gallery" aria-label="Styles"></ol>
+      <p class="spec-more">Also in the generator: shade blocks, sparse, binary, letter tiles, film, drifting pixels and your own characters.</p>
+    </div>
     <figure class="spec-proof">
-      <div class="plate cmp" id="specCmp" tabindex="0" role="slider" aria-label="Compare style with original" aria-valuemin="0" aria-valuemax="100" aria-valuenow="55">
+      <div class="plate cmp" id="specCmp" tabindex="0" role="slider" aria-label="Compare style with original" aria-valuemin="0" aria-valuemax="100" aria-valuenow="70">
         <canvas id="specOrig"></canvas><canvas id="specOut" class="after"></canvas><div class="bar"><i></i></div>
         <span class="tag l data">Output</span><span class="tag r data">Original</span>
       </div>
-      <figcaption class="slug"><span class="data" id="specSlug"></span><a class="link" id="specTry" href="./app/">Open in the generator</a></figcaption>
+      <figcaption class="slug"><span class="spec-cap"><b id="specName"></b> <span id="specDesc"></span></span><a class="link" id="specTry" href="./app/">Open in the generator</a></figcaption>
     </figure>
   </div>
-  <p class="spec-more">Also in the generator: shade blocks, sparse, binary, letter tiles, film, drifting pixels and your own characters.</p>
 </div></section>
 
 <section class="desk wrap" id="features" aria-labelledby="h-feat">
@@ -62,15 +66,15 @@
     <div class="notes">
       <div><h3>Video to ASCII, saved as MP4</h3><p>Videos convert live as they play. Export renders every frame, so the file is smooth whatever your machine, at 720p, 1080p or 4K and up to a minute long.</p></div>
       <div><h3>Presets that show your picture</h3><p>The preset strip shows your own picture in every preset, live. Digital rain, Old monitor or Brick mosaic set every control at once; tune one until it is yours.</p></div>
-      <div><h3>Colour, outlines and glow</h3><p>Pick a palette or keep the picture's colours, trace the edges, then finish with bloom, scanlines, CRT curvature, aberration, grain and flicker. Move the three sliders under the preview to try them.</p></div>
+      <div><h3>Colour, outlines and glow</h3><p>Pick a palette or keep the picture's colours, trace the edges, then finish with bloom, scanlines, CRT curvature, aberration, grain and flicker. Try three of them on the proof.</p></div>
     </div>
   </div>
   <div class="desk-live">
-    <div class="plate"><canvas id="live" aria-label="Live preview of the finishing controls" role="img"></canvas></div>
+    <div class="plate"><canvas id="live" aria-label="Live preview of the tuning controls" role="img"></canvas></div>
     <div class="faders">
       <label class="rng"><span class="top"><span>Outlines</span><output class="data">55</output></span><input type="range" min="0" max="100" value="55" data-k="outlines"></label>
-      <label class="rng"><span class="top"><span>Glow</span><output class="data">40</output></span><input type="range" min="0" max="100" value="40" data-k="glow"></label>
-      <label class="rng"><span class="top"><span>Scanlines</span><output class="data">0</output></span><input type="range" min="0" max="100" value="0" data-k="scanlines"></label>
+      <label class="rng"><span class="top"><span>Glow</span><output class="data">45</output></span><input type="range" min="0" max="100" value="45" data-k="glow"></label>
+      <label class="rng"><span class="top"><span>Scanlines</span><output class="data">40</output></span><input type="range" min="0" max="100" value="40" data-k="scanlines"></label>
     </div>
   </div>
 </section>
@@ -78,22 +82,29 @@
 <section class="faq wrap" id="faq" aria-labelledby="h-faq">
   <h2 id="h-faq">Questions, answered.</h2>
   <div>
-  <details open><summary>What is ASCII art?</summary><p>ASCII art draws a picture using only text characters. Dark areas get dense characters such as @ and #, light areas get thin ones such as . and :, so from a distance the letters add up to the image. This generator also makes braille, halftone dots, dither and brick mosaics.</p></details>
+  <details open><summary>What is ASCII art?</summary><p>ASCII art draws a picture using only text characters. Dark areas get dense characters such as <code>@</code> and <code>#</code>, light areas get thin ones such as <code>.</code> and <code>:</code>, so from a distance the letters add up to the image. This generator also makes braille, halftone dots, dither and brick mosaics.</p></details>
   <details><summary>How do I turn a photo into ASCII art?</summary><p>Open the generator and drop in a photo, or paste one, and it converts at once. Pick a style or a preset, use Detail to set how many characters wide it is, then save it as an image.</p></details>
   <details><summary>Can I turn a video into ASCII art?</summary><p>Yes. Add a video and it converts live as it plays. Export saves an MP4 at 720p, 1080p or 4K, up to a minute long. Every frame is converted, so the result is smooth even on a slow machine. MP4 export needs a browser with WebCodecs (Chrome, Edge, Safari 16.4+).</p></details>
   <details><summary>Are my photos uploaded anywhere?</summary><p>No. The conversion runs in your browser on your own device, so your pictures and videos never leave it.</p></details>
   <details><summary>What is the difference between ASCII, braille and halftone?</summary><p>ASCII styles pick a letter or symbol by brightness. Braille uses tiny dot patterns, so each cell holds up to eight dots and the detail is finer. Halftone (Round dots) draws dots of different sizes, like a newspaper print.</p></details>
   <details><summary>What is dithering, and when should I use it?</summary><p>Dithering fakes shades with patterns of dots in only two tones, the look of old one-bit screens. It suits logos, flat graphics and posters. For photos with soft shading, Braille or Detailed usually looks smoother.</p></details>
-  <details><summary>How do I make the Matrix digital rain effect?</summary><p>Open the generator and click Digital rain in the preset strip. It gives you green 1s and 0s on black, with a glow and a shimmer, and it moves when you add a video or turn Animate on.</p></details>
+  <details><summary>How do I make the Matrix digital rain effect?</summary><p>Open the generator and choose Digital rain in the preset strip. It gives you green 1s and 0s on black, with a glow and a shimmer, and it moves when you add a video or turn Animate on.</p></details>
   </div>
 </section>
 
 <section class="end wrap" aria-labelledby="h-end">
-  <h2 id="h-end">Set your first picture.</h2>
-  <p>Free, private and ready in a few seconds.</p>
-  <a class="btn primary lg" href="./app/">Open the generator</a>
+  <div class="end-copy">
+    <h2 id="h-end">Set your first picture.</h2>
+    <p>Nineteen presets are waiting for it.</p>
+    <a class="btn primary lg" href="./app/">Open the generator</a>
+  </div>
+  <ul class="sheet" id="sheet" aria-label="Six presets on one picture"></ul>
 </section>
 </main>
-<footer><div class="wrap"><span>ASCII Studio</span><span>Runs entirely in your browser. Nothing is uploaded.</span></div></footer>
+<footer><div class="wrap">
+  <span class="foot-name">ASCII Studio</span>
+  <nav class="foot-links" aria-label="Footer"><a href="./app/">Generator</a><a href="#styles">Styles</a><a href="#faq">FAQ</a></nav>
+  <p class="foot-credit">Set in Bricolage Grotesque and Martian Mono, both under the SIL Open Font License (<a href="./fonts/OFL-BricolageGrotesque.txt">Bricolage</a>, <a href="./fonts/OFL-MartianMono.txt">Martian</a>).</p>
+</div></footer>
 <script type="module" src="./src/landing.ts"></script>
 </body></html>
