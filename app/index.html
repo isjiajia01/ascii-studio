@@ -9,6 +9,7 @@
   <span class="src data" id="srcInfo">No picture yet</span>
   <div class="end-tools">
     <div class="links"><a href="../#styles" target="_blank" rel="noopener">Styles<span class="vh"> (opens in a new tab)</span></a><a href="../#faq" target="_blank" rel="noopener">Help<span class="vh"> (opens in a new tab)</span></a></div>
+    <details class="menu" id="menu"><summary>Menu</summary><div class="menu-pop"><a href="../#styles" target="_blank" rel="noopener">Styles<span class="vh"> (opens in a new tab)</span></a><a href="../#faq" target="_blank" rel="noopener">Help<span class="vh"> (opens in a new tab)</span></a></div></details>
     <button class="btn" id="replace">Open file</button>
   </div>
 </nav>
@@ -30,6 +31,7 @@
         <p id="glmsg" role="alert" hidden>This tool needs WebGL2, which this browser does not offer. Try a recent Chrome, Edge, Firefox or Safari.</p>
       </div>
     </div>
+    <div class="transport" id="transport" hidden><button class="btn" id="play"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/></svg><span class="lbl">Pause</span></button><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position"><span class="data" id="time">0:00 / 0:00</span></div>
     <div class="toolbar">
       <span class="slug data" id="slug" aria-live="polite">Add a picture to begin</span>
       <div class="tools">
@@ -38,7 +40,6 @@
         <button class="btn primary to-exp" id="toExport" disabled>Export</button>
       </div>
     </div>
-    <div class="transport" id="transport" hidden><button class="btn" id="play">Pause</button><input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Video position"><span class="data" id="time">0:00 / 0:00</span></div>
   </div>
   <section class="strip" aria-labelledby="h-presets">
     <div class="strip-head">
