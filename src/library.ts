@@ -1,3 +1,4 @@
+import './cursor'; import './motion';
 import { Renderer, fitSize, type SourceEl } from './engine/renderer';
 import { STYLES, PALETTES, DEFAULTS, type Params } from './engine/styles';
 import { WORKS, workParams, workUrl, lookName, presetName, type Work } from './works';

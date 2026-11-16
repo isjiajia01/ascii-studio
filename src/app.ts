@@ -1,3 +1,4 @@
+import './cursor';
 import { Renderer, fitSize, type SourceEl } from './engine/renderer';
 import { STYLES, STYLE_ORDER, PALETTES, PRESETS, DEFAULTS, applyPreset, type Params } from './engine/styles';
 import { getSample, SAMPLES } from './engine/samples';
