@@ -28,7 +28,7 @@
   --ease:cubic-bezier(.2,.7,.2,1);--fast:140ms;--slow:900ms;
   --nav-h:56px;
   /* china-marker loop, drawn as a 9-slice: corners keep their shape at any size, so the clearance is constant */
-  --loop:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath d='M21 8C28 10.5 34 12.8 40 14L80 13C96 12.5 105.5 14 106 27C106.3 33 106 37 106 40L107 80C107.4 96 103 106.5 90 106.6C86 106.6 83 106.2 80 106L40 107C24 107.6 14 104 13.4 91C13.2 86 13 83 13 80L14 40C14 30 17 19 24 13.5C28 10 32 7.5 36 6' fill='none' stroke='%23ffd23f' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --loop:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cpath d='M33 14.6C35.5 14.4 37.8 14.2 40 14L80 13C96 12.5 105.5 14 106 27C106.3 33 106 37 106 40L107 80C107.4 96 103 106.5 90 106.6C86 106.6 83 106.2 80 106L40 107C24 107.6 14 104 13.4 91C13.2 86 13 83 13 80L14 40C14 28 16.5 17.5 27 14.6C31 13.6 35 12.4 39.5 10.8' fill='none' stroke='%23ffd23f' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --loop-w:20px;   /* band that holds the stroke */
   --loop-out:16px; /* how far the band reaches outside the element: the stroke sits ~9px outside it */
   color-scheme:dark;
@@ -103,7 +103,8 @@ button,input,select{font:inherit;color:inherit}canvas{display:block}
 .wrap{width:min(1320px,100% - 48px);margin-inline:auto}
 /* one column system for every two-part section: 5 + 7, 72px gutter */
 .wrap{--cols:minmax(0,5fr) minmax(0,7fr);--gut:var(--s8)}
-section{scroll-margin-top:calc(var(--nav-h) + 16px)}
+/* anchor jumps land the section's top rule exactly on the nav's bottom rule, so the two never read as a double line */
+section{scroll-margin-top:calc(var(--nav-h) - 1px)}
 /* condensed 800 needs air: neutral tracking, leading that lets descenders clear the next line's caps */
 h1{font-size:clamp(56px,8.2vw,124px);line-height:.94;font-weight:800;font-stretch:75%;letter-spacing:.004em;text-wrap:balance}
 h2{font-size:clamp(40px,5.4vw,80px);line-height:.96;font-weight:800;font-stretch:75%;letter-spacing:.004em;text-wrap:balance}
@@ -137,7 +138,8 @@ code{font-family:var(--mono);font-size:.82em;font-stretch:87.5%;padding:1px 6px;
 .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s6)}
 .steps li{display:flex;flex-direction:column;gap:var(--s3)}
 .frame{position:relative;aspect-ratio:3/2;margin-bottom:var(--s3);background:var(--carbon-well);border:1px solid var(--rule)}
-.frame canvas{width:100%;height:100%;object-fit:cover;object-position:50% 25%}
+/* the canvas is laid over the frame so the frame keeps its 3:2 ratio whatever the canvas's own size */
+.frame canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%}
 .frame .tag{position:absolute;bottom:var(--s2);top:auto;left:var(--s2)}
 .steps h3{font-size:clamp(32px,3.2vw,44px);line-height:1;font-weight:800;font-stretch:75%;letter-spacing:.004em}
 .steps p{max-width:34ch;font-size:16.5px;line-height:1.5;color:var(--paper-2);text-wrap:pretty}
@@ -156,8 +158,12 @@ code{font-family:var(--mono);font-size:.82em;font-stretch:87.5%;padding:1px 6px;
 .spec-index .nm{font-size:22px;font-weight:650;letter-spacing:-.01em;font-stretch:90%}
 .spec-index .gl{font-family:var(--mono);font-size:15px;font-stretch:87.5%;color:var(--paper-2);letter-spacing:.04em}
 .spec-index button[aria-pressed=true]{color:var(--paper)}
+/* in the index the loop is drawn just inside the row (not outset), and the row's own hairlines step aside for it */
+.spec-index button{--loop-out:2px;padding:0 var(--s4)}
+.spec-index li:has(.marked),.spec-index li:has(.marked)+li{border-top-color:transparent}
+.spec-index li:last-child:has(.marked){border-bottom-color:transparent}
 .spec-index button[aria-pressed=true] .gl{color:var(--marker)}
-.spec-proof{padding:18px}
+.spec-proof{padding:18px;scroll-margin-top:calc(var(--nav-h) + 8px)}
 .spec-proof .plate{aspect-ratio:5/4}
 .spec-proof .slug{margin-top:var(--s5);align-items:baseline}
 .spec-cap{color:var(--paper-2);font-size:15px;max-width:52ch;text-wrap:pretty}
@@ -230,10 +236,10 @@ input[type=color]::-moz-color-swatch{border:0}
 .app-nav .end-tools{margin-left:auto;display:flex;gap:var(--s2);align-items:center}
 .app-nav .links{margin-left:0}
 /* one grid for stage, strip and rail: on phones it collapses to one scroll parent, so the sticky stage stays pinned */
-.app{display:grid;grid-template-columns:minmax(0,1fr) 336px;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"stage panel" "strip panel";height:calc(100dvh - var(--nav-h))}
+.app{--ar:1.25;display:grid;grid-template-columns:minmax(0,1fr) 336px;grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"stage panel" "strip panel";height:calc(100dvh - var(--nav-h))}
 .stage{grid-area:stage;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--carbon-0)}
 .view{position:relative;flex:1;min-height:0;display:grid;place-items:center;container-type:size;overflow:hidden}
-.view .plate{--ar:1.25;aspect-ratio:var(--ar);width:min(calc(100cqw - 72px),calc((100cqh - 72px) * var(--ar)))}
+.view .plate{aspect-ratio:var(--ar);width:min(calc(100cqw - 72px),calc((100cqh - 72px) * var(--ar)))}
 .view.empty .plate{visibility:hidden}
 #orig{display:none}
 .view.compare #orig,.view.split #orig{display:block}
@@ -267,9 +273,11 @@ input[type=color]::-moz-color-swatch{border:0}
 .toolbar .tools{display:flex;gap:var(--s2)}
 .toolbar .to-exp{display:none}
 #compare{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+/* the timeline sits directly under the picture, above the compare toolbar */
 .transport{display:flex;gap:var(--s3);align-items:center;padding:var(--s2) var(--s4);border-top:1px solid var(--rule)}
 .transport[hidden]{display:none}.transport input{flex:1}
-.transport #play{min-width:72px}
+.transport #play{min-width:88px;justify-content:flex-start}
+#play svg{width:12px;height:12px;flex:none;fill:currentColor}
 .transport .data{min-width:92px;text-align:right}
 
 .strip{grid-area:strip;min-width:0;border-top:1px solid var(--rule);background:var(--carbon-1)}
@@ -312,7 +320,7 @@ input[type=color]::-moz-color-swatch{border:0}
 .style:hover{border-color:var(--rule-strong);color:var(--paper)}
 .style[aria-pressed=true]{background:var(--carbon-3)}
 .style[aria-pressed=true] .gl{color:var(--paper);border-color:var(--marker)}
-.desc{color:var(--paper-3);font-size:13px;line-height:1.4;margin-top:var(--s3);text-wrap:pretty}
+.desc{color:var(--paper-3);font-size:13px;line-height:1.4;margin-top:10px;text-wrap:pretty}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
 .seg button{min-height:36px;border:1px solid var(--rule-strong);border-radius:var(--r);background:var(--carbon-2);cursor:pointer;font-size:13px;color:var(--paper-2)}
 .seg button:hover{color:var(--paper)}
@@ -350,45 +358,42 @@ select:disabled{opacity:.45;cursor:default}
 .app.is-empty .style[aria-pressed=true] .gl{border-color:var(--rule)}
 .app.is-empty .seg button.on{border-color:var(--paper-3);box-shadow:none}
 
-/* ---------- responsive ---------- */
+/* ---------- responsive ----------
+   Landing: two columns down to 720px (hero, specimen, tuning desk), so on tablets the proof and the controls that
+   drive it share one screen; one column below that. The nav keeps its links down to 640px. */
 @media (max-width:1080px){
-  .hero{grid-template-columns:1fr;gap:var(--s6);padding:var(--s7) 0 var(--s8)}
-  .desk,.faq,.end,.sec-head{grid-template-columns:1fr;gap:var(--s6)}
-  .sec-head{gap:var(--s4)}
-  .desk-live,.faq h2{position:static}
-  .spec-body{grid-template-columns:1fr;gap:var(--s5)}
-  .spec-proof{order:-1}
-  .spec-side{padding-top:0}
-  .spec-index{grid-template-columns:1fr 1fr;grid-auto-rows:auto;column-gap:var(--s4)}
-  .spec-index button{min-height:52px}
-  .spec-index li:nth-last-child(2){border-bottom:1px solid var(--rule)}
+  .wrap{--gut:var(--s7)}
+  .hero{padding:var(--s7) 0 var(--s8)}
 }
 @media (max-width:860px){
   :root{--nav-h:52px}
   .nav{padding:0 var(--s4);gap:var(--s3)}
   .site-nav{padding-inline:var(--s4)}
-  .site-nav .links,.wide-only{display:none}
-  .menu{display:block}
-  .wrap{width:min(100% - 32px,1320px)}
-  .sec-head{grid-template-columns:1fr;gap:var(--s4);margin-bottom:var(--s6)}
+  .wide-only{display:none}
+  .wrap{width:min(100% - 32px,1320px);--gut:var(--s6)}
+  .faq,.end,.sec-head{grid-template-columns:1fr;gap:var(--s6)}
+  .sec-head{gap:var(--s4);margin-bottom:var(--s6)}
+  .faq h2{position:static}
   .specimen,.desk,.faq,.end{padding:var(--s8) 0}
   .process{padding:var(--s7) 0}
-  .steps{grid-template-columns:1fr;gap:var(--s7)}
-  .frame{aspect-ratio:2/1}
-  .sheet{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps{gap:var(--s5)}
+  .steps h3{font-size:30px}
+  .steps p{font-size:15.5px}
   .foot-credit{margin-left:0;flex-basis:100%}
   .faders{grid-template-columns:1fr;gap:var(--s2)}
   .rng{grid-template-columns:84px 1fr 32px;align-items:center}
   .rng .top{display:contents}
   .rng .top .data{order:3;text-align:right}
-  .spec-index .nm{font-size:18px}
-  .spec-index .gl{display:none}
+  .spec-index .nm{font-size:19px}
+  .spec-index .gl{font-size:13px}
   .proof .slug{flex-direction:column;align-items:flex-start}
+  .desk-copy{gap:var(--s6)}
   /* generator: .app is the single scroll parent of stage, strip and rail, so the stage stays pinned for every control */
   .app{display:block;height:auto}
-  .stage{position:sticky;top:var(--nav-h);z-index:6;border-bottom:1px solid var(--rule-strong);box-shadow:0 10px 18px -12px rgba(0,0,0,.8)}
-  .view{flex:none;height:clamp(200px,40svh,440px)}
-  .view .plate{width:min(calc(100cqw - 48px),calc((100cqh - 48px) * var(--ar)))}
+  .stage{position:sticky;top:var(--nav-h);z-index:6;container-type:inline-size;border-bottom:1px solid var(--rule-strong);box-shadow:0 10px 18px -12px rgba(0,0,0,.8)}
+  /* the pinned preview is only as tall as the picture needs (source aspect + room for the crop marks), never more than 38svh */
+  .view{flex:none;height:clamp(180px,calc((100cqw - 48px) / var(--ar) + 40px),38svh)}
+  .view .plate{width:min(calc(100cqw - 48px),calc((100cqh - 40px) * var(--ar)))}
   .drop{inset:var(--s3);gap:var(--s3)}
   .drop .hint-desk{display:none}
   .sample canvas{width:64px}
@@ -399,6 +404,7 @@ select:disabled{opacity:.45;cursor:default}
   .toolbar .btn .k{display:none}
   .toolbar .to-exp{display:inline-flex}
   .transport{padding:var(--s1) var(--s3)}
+  .transport #play{min-height:40px}
   .pager{display:none}
   .panel{border-left:0;overflow:visible}
   .exp{position:static;padding:var(--s4)}
@@ -409,8 +415,32 @@ select:disabled{opacity:.45;cursor:default}
   .app.is-empty .drop{position:relative;inset:auto;margin:var(--s3);width:calc(100% - 24px);padding:var(--s6) var(--s4)}
   .app.is-empty .drop h2{font-size:40px}
   .exp::before{display:none}
-  .app-nav .links{display:none}
   .preset{width:88px}.preset canvas{width:88px;height:72px}
+}
+@media (max-width:719px){
+  .hero,.desk{grid-template-columns:1fr;gap:var(--s6)}
+  .desk-live{position:static}
+  .spec-body{grid-template-columns:1fr;gap:var(--s5)}
+  .spec-proof{order:-1}
+  .spec-side{padding-top:0}
+  .spec-index{grid-template-columns:1fr 1fr;grid-auto-rows:auto;column-gap:var(--s4)}
+  .spec-index button{min-height:52px}
+  .spec-index li:nth-last-child(2){border-bottom:1px solid var(--rule)}
+  /* two columns: the row under a looped cell is two items on */
+  .spec-index li:has(.marked)+li{border-top-color:var(--rule)}
+  .spec-index li:has(.marked)+li+li{border-top-color:transparent}
+  .spec-index li:nth-last-child(-n+2):has(.marked){border-bottom-color:transparent}
+  .spec-index .nm{font-size:18px}
+  .spec-index .gl{display:none}
+  /* stacked plates never outgrow the window, so a proof and its caption fit on one screen */
+  .hero .plate,.spec-proof .plate,.desk-live .plate{width:min(100%,calc(58svh * 1.25));margin-inline:auto}
+  .steps{grid-template-columns:1fr;gap:var(--s7)}
+  .steps h3{font-size:32px}
+  .sheet{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:639px){
+  .nav .links{display:none}
+  .menu{display:block}
 }
 @media (max-width:560px){
   .toolbar .slug{display:none}
@@ -418,6 +448,16 @@ select:disabled{opacity:.45;cursor:default}
   .toolbar .to-exp{margin-left:auto}
   .app-nav .brand-name{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .app-nav .src{padding-left:var(--s3)}
+  /* video on a phone: one timeline row (scrub + time) under the picture, and Play joins the toolbar row */
+  .app.is-video .stage{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"view view view" "scrub scrub time" "play bar bar"}
+  .app.is-video .view{grid-area:view}
+  .app.is-video .transport{display:contents}
+  .app.is-video #scrub{grid-area:scrub;margin:6px 0 2px var(--s3);height:28px;width:auto}
+  .app.is-video #time{grid-area:time;align-self:center;min-width:0;margin:4px var(--s3) 0 var(--s3)}
+  .app.is-video #play{grid-area:play;align-self:center;min-width:40px;width:40px;min-height:40px;padding:0;margin-left:var(--s3);justify-content:center}
+  .app.is-video #play .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .app.is-video .toolbar{grid-area:bar;border-top:0;padding-left:var(--s2)}
+  .app.is-video .view{border-bottom:1px solid var(--rule)}
 }
 @media (max-width:420px){
   .facts{gap:var(--s2) 14px;font-size:13px}

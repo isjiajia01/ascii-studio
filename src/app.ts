@@ -199,12 +199,19 @@ function refreshAll() { refreshers.forEach(f => f()); metaRefreshers.forEach(f =
 const presetCards = PRESETS.map(pr => {
   const b = document.createElement('button'); b.className = 'preset'; b.title = pr.name;
   b.innerHTML = '<canvas width="120" height="96" aria-hidden="true"></canvas><span>' + pr.name + '</span>';
-  b.onclick = () => { p = applyPreset(p, pr.id); activePreset = pr.id; refreshAll(); syncPresetUI(); markDirty(); };
+  b.onclick = () => { p = applyPreset(p, pr.id); activePreset = pr.id; refreshAll(); syncPresetUI(); markDirty(); revealPreset(true); };
   presetsEl.appendChild(b); return { pr, b, c: b.querySelector('canvas')! };
 });
 function syncPresetUI() {
   // The marker loop means "your picture, in this preset": it only appears once there is a picture.
   presetCards.forEach(({ pr, b }) => { const on = pr.id === activePreset; b.classList.toggle('on', on && !!src); b.classList.toggle('marked', on && !!src); b.setAttribute('aria-pressed', String(on)); });
+}
+/** Keep the chosen preset inside the strip's unfaded area (on load it may be the 9th card of 19). */
+function revealPreset(smooth = false) {
+  const card = presetCards.find(x => x.pr.id === activePreset)?.b; if (!card) return;
+  const r = card.getBoundingClientRect(), sr = presetsEl.getBoundingClientRect(), pad = 72;
+  const dx = r.left < sr.left + pad ? r.left - sr.left - pad : r.right > sr.right - pad ? r.right - sr.right + pad : 0;
+  if (dx) presetsEl.scrollBy({ left: dx, behavior: smooth && !reduceMotion ? 'smooth' : 'auto' });
 }
 let thumbAt = 0;
 function renderThumbs() {
@@ -241,10 +248,11 @@ function setSource(el: SourceEl, w: number, h: number, kind: 'image' | 'video') 
   renderer?.setSource(el, w, h);
   drop.classList.add('hidden'); view.classList.remove('empty');
   ($('compare') as HTMLButtonElement).disabled = false; ($('split') as HTMLButtonElement).disabled = false;
-  plate.style.setProperty('--ar', String(w / h));
-  transport.hidden = kind !== 'video';
+  // The source aspect sizes the plate everywhere and, on phones, the height of the pinned preview.
+  app.style.setProperty('--ar', String(w / h));
+  transport.hidden = kind !== 'video'; app.classList.toggle('is-video', kind === 'video');
   syncSlug();
-  $('stripNote').textContent = 'Your picture in every preset.';
+  $('stripNote').textContent = kind === 'video' ? 'Your video in every preset.' : 'Your picture in every preset.';
   fillFormats(); syncExportState(); syncPresetUI(); renderThumbs(); markDirty();
 }
 function loadSample(i: number) { const c = getSample(i); srcName = SAMPLES[i % SAMPLES.length].id + '.png'; setSource(c, c.width, c.height, 'image'); }
@@ -262,10 +270,16 @@ async function loadFile(f: File) {
   }
 }
 const play = $<HTMLButtonElement>('play'), scrub = $<HTMLInputElement>('scrub'), timeEl = $('time');
+const PLAY_ICON = '<path d="M3 1.5v9l7.5-4.5z"/>', PAUSE_ICON = '<path d="M2.5 1.5h2.5v9H2.5zM7 1.5h2.5v9H7z"/>';
+/** The button shows what a press does: a play or pause glyph plus its word (the word is visually hidden on phones). */
+function setPlay(paused: boolean) {
+  play.querySelector('svg')!.innerHTML = paused ? PLAY_ICON : PAUSE_ICON;
+  play.querySelector('.lbl')!.textContent = paused ? 'Play' : 'Pause';
+}
 const fmtT = (s: number) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 function bindVideo(v: HTMLVideoElement) {
-  play.onclick = () => { if (v.paused) void v.play(); else v.pause(); play.textContent = v.paused ? 'Play' : 'Pause'; markDirty(); };
-  play.textContent = 'Pause';
+  play.onclick = () => { if (v.paused) void v.play(); else v.pause(); setPlay(v.paused); markDirty(); };
+  setPlay(false);
   const fill = () => scrub.style.setProperty('--v', (parseFloat(scrub.value) / 10) + '%');
   scrub.oninput = () => { v.currentTime = (parseFloat(scrub.value) / 1000) * v.duration; fill(); markDirty(); };
   v.ontimeupdate = () => { if (document.activeElement !== scrub) { scrub.value = String(Math.round(v.currentTime / v.duration * 1000)); fill(); } timeEl.textContent = fmtT(v.currentTime) + ' / ' + fmtT(v.duration); };
@@ -358,10 +372,16 @@ const page = (dir: number) => presetsEl.scrollBy({ left: dir * presetsEl.clientW
 prevP.onclick = () => page(-1); nextP.onclick = () => page(1);
 presetsEl.addEventListener('scroll', syncStrip, { passive: true });
 // Control rail: a fade above the pinned export block while more controls sit below it.
-function syncRail() { panel.classList.toggle('more', panel.scrollTop + panel.clientHeight < panel.scrollHeight - 4); }
+// Only fade when a real share of a row is hidden: a few px of overflow must not dim a header that is fully readable.
+function syncRail() { panel.classList.toggle('more', panel.scrollTop + panel.clientHeight < panel.scrollHeight - 24); }
 panel.addEventListener('scroll', syncRail, { passive: true });
 panel.addEventListener('toggle', syncRail, true);
 new ResizeObserver(() => { syncStrip(); syncRail(); }).observe(document.body);
-syncStrip(); syncRail();
+revealPreset(); syncStrip(); syncRail();
+// Phone nav: Styles and Help sit in a menu that closes after a pick, a tap outside or Escape.
+const menu = $<HTMLDetailsElement>('menu');
+menu.addEventListener('click', e => { if ((e.target as HTMLElement).closest('a')) menu.open = false; });
+document.addEventListener('click', e => { if (menu.open && !menu.contains(e.target as Node)) menu.open = false; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.open) { menu.open = false; menu.querySelector('summary')!.focus(); } });
 // Leaving the page drops the picture and every setting, so ask first once there is work to lose.
 window.addEventListener('beforeunload', e => { if (src) { e.preventDefault(); e.returnValue = ''; } });

@@ -79,15 +79,20 @@ function init() {
   const heroIds = ['detailed', 'poster', 'bricks', 'monitor', 'swarm'];
   let cur = proofParams('detailed');
   const pills = $('heroPills'), heroSlug = $('heroSlug');
+  const pickHero = (id: string, b: HTMLElement) => {
+    const pr = PRESETS.find(x => x.id === id)!;
+    cur = proofParams(id); cur.animate = cur.animate && !reduceMotion;
+    pills.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    heroSlug.innerHTML = '<b>' + pr.name + '</b> · ' + STYLES[cur.style].name.toLowerCase() + ' · ' + SNAME;
+  };
+  // A phone-sized plate has too few cells for Detailed colour to keep the balloon's stripes; halftone dots carry the
+  // colour at any size, so small plates open on Poster halftone (the chips keep their order).
+  const firstHero = heroCmp.clientWidth < 560 ? 'poster' : 'detailed';
   heroIds.forEach(id => {
     const pr = PRESETS.find(x => x.id === id)!; const b = document.createElement('button'); b.className = 'chip'; b.textContent = pr.name;
-    b.setAttribute('aria-pressed', String(id === heroIds[0]));
-    b.onclick = () => {
-      cur = proofParams(id); cur.animate = cur.animate && !reduceMotion;
-      pills.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-      heroSlug.innerHTML = '<b>' + pr.name + '</b> · ' + STYLES[cur.style].name.toLowerCase() + ' · ' + SNAME;
-    };
+    b.onclick = () => pickHero(id, b);
     pills.appendChild(b);
+    if (id === firstHero) pickHero(id, b); else b.setAttribute('aria-pressed', 'false');
   });
   const aspect = pic.width / pic.height;
   let vis = true; new IntersectionObserver(es => { vis = es[0].isIntersecting; }).observe(heroCmp);
@@ -100,17 +105,27 @@ function init() {
   };
   requestAnimationFrame(loop);
 
-  /* how it works: three frames of one contact sheet: the original, three styles side by side, the finished file */
+  /* how it works: three frames of one contact sheet: the original, the same balloon in three styles, the finished file */
   const s1 = $<HTMLCanvasElement>('step1'), s2 = $<HTMLCanvasElement>('step2'), s3 = $<HTMLCanvasElement>('step3');
   drawOrig(s1, pic, 720);
-  const strip = document.createElement('canvas'); const [sw, sh] = fitSize(aspect, 720); strip.width = sw; strip.height = sh;
-  const sx = strip.getContext('2d')!;
-  ['classic', 'noir', 'bricks'].forEach((id, k) => {
-    const tmp = document.createElement('canvas'); draw(tmp, pic, proofParams(id), 720);
-    sx.drawImage(tmp, Math.round(k * sw / 3), 0, Math.ceil(sw / 3), sh, Math.round(k * sw / 3), 0, Math.ceil(sw / 3), sh);
-  });
-  sx.fillStyle = '#0e0d0b'; sx.fillRect(Math.round(sw / 3) - 1, 0, 3, sh); sx.fillRect(Math.round(2 * sw / 3) - 1, 0, 3, sh);
-  s2.width = sw; s2.height = sh; s2.getContext('2d')!.drawImage(strip, 0, 0);
+  // Step 2 is three whole balloons side by side (letters, dither, bricks), each a portrait crop centred on the main balloon.
+  // Presets with their own paper colour are used so each tile reads as a separate print on the dark frame.
+  const tiles = ['blueprint', 'gameboy', 'bricks'].map(id => { const c = document.createElement('canvas'); draw(c, pic, proofParams(id), 720); return c; });
+  const BX = 390 / 1000; // the main balloon's centre, as a share of the sample's width
+  const drawTiles = () => {
+    const fr = s2.parentElement!, ar = fr.clientWidth / Math.max(1, fr.clientHeight) || 1.5;
+    const W = 960, H = Math.round(W / ar), g = Math.round(W * 0.025);
+    const tw = Math.floor((W - g * 4) / 3), th = Math.min(H - g * 2, Math.round(tw / 0.7));
+    s2.width = W; s2.height = H;
+    const x = s2.getContext('2d')!; x.fillStyle = '#090807'; x.fillRect(0, 0, W, H);
+    tiles.forEach((t, k) => {
+      const ch = t.height, cw = Math.min(t.width, Math.round(ch * tw / th));
+      const cx = Math.max(0, Math.min(t.width - cw, Math.round(t.width * BX - cw / 2)));
+      x.drawImage(t, cx, 0, cw, ch, g + k * (tw + g), Math.round((H - th) / 2), tw, th);
+    });
+  };
+  drawTiles();
+  matchMedia('(max-width:719px)').addEventListener('change', drawTiles);
   draw(s3, pic, proofParams('poster'), 720);
 
   /* style specimen: an index of styles, one large proof of the same picture */
@@ -130,7 +145,8 @@ function init() {
   bindCmp(specCmp, 70);
   drawOrig(specOrig, pic, 1000);
   const btns: HTMLButtonElement[] = [];
-  const show = (k: number) => {
+  const stacked = matchMedia('(max-width:719px)');
+  const show = (k: number, user = false) => {
     const it = picks[k];
     btns.forEach((b, i) => { b.setAttribute('aria-pressed', String(i === k)); b.classList.toggle('marked', i === k); });
     const q = proofParams(it.id); q.detail = fitDetail(q.detail, specCmp);
@@ -139,12 +155,17 @@ function init() {
     specDesc.textContent = it.id === 'monitor' ? 'Phosphor green, scanlines and curved glass.' : STYLES[it.style as keyof typeof STYLES].desc;
     specTry.href = './app/?preset=' + it.id + '&sample=' + SI;
     specTry.textContent = 'Open ' + it.name + ' in the generator';
+    // Stacked layout: the index sits under the proof, so a pick made after scrolling brings the proof back into view.
+    if (user && stacked.matches) {
+      const r = specCmp.getBoundingClientRect(), navH = document.querySelector('.site-nav')!.getBoundingClientRect().bottom;
+      if (r.top < navH || r.bottom > innerHeight) specCmp.closest('figure')!.scrollIntoView({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+    }
   };
   picks.forEach((it, i) => {
     const li = document.createElement('li'); const b = document.createElement('button');
     b.innerHTML = '<span class="nm"></span><span class="gl" aria-hidden="true"></span>';
     b.querySelector('.nm')!.textContent = it.name; b.querySelector('.gl')!.textContent = it.gl;
-    b.onclick = () => show(i);
+    b.onclick = () => show(i, true);
     li.appendChild(b); gal.appendChild(li); btns.push(b);
   });
   show(0);
