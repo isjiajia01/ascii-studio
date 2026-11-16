@@ -2,6 +2,7 @@ import { Renderer, fitSize, type SourceEl } from './engine/renderer';
 import { STYLES, STYLE_ORDER, PALETTES, PRESETS, DEFAULTS, applyPreset, type Params } from './engine/styles';
 import { getSample, SAMPLES } from './engine/samples';
 import { exportImage, exportVideo, download, videoExportSupported } from './engine/export';
+import { sound } from './sound';
 import { findWork, workParams, workUrl } from './works';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -70,7 +71,7 @@ const styleBtns = STYLE_ORDER.map(id => {
   b.innerHTML = '<span class="gl" aria-hidden="true"></span><span></span>';
   b.querySelector('.gl')!.textContent = GLYPHS[id] || '';
   (b.lastChild as HTMLElement).textContent = STYLES[id].name;
-  b.onclick = () => { p.style = id; touched(); refreshAll(); }; styleGrid.appendChild(b); return [id, b] as const;
+  b.onclick = () => { sound.tick(); p.style = id; touched(); refreshAll(); }; styleGrid.appendChild(b); return [id, b] as const;
 });
 const styleDesc = document.createElement('p'); styleDesc.className = 'desc'; sStyle.appendChild(styleDesc);
 const customWrap = document.createElement('div'); customWrap.style.marginTop = '10px';
@@ -96,7 +97,7 @@ colVal.className = 'val data';
 const seg = document.createElement('div'); seg.className = 'seg';
 seg.setAttribute('role', 'group'); seg.setAttribute('aria-label', 'Colour mode');
 const modes: [Params['colorMode'], string][] = [['mono', 'Mono'], ['source', 'Picture'], ['palette', 'Palette']];
-const segBtns = modes.map(([m, n]) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { p.colorMode = m; touched(); refreshAll(); }; seg.appendChild(b); return [m, b] as const; });
+const segBtns = modes.map(([m, n]) => { const b = document.createElement('button'); b.textContent = n; b.onclick = () => { sound.tick(); p.colorMode = m; touched(); refreshAll(); }; seg.appendChild(b); return [m, b] as const; });
 sCol.appendChild(seg);
 // Palette swatches only matter in Palette mode, Ink only in Mono; Background applies to every mode.
 const palWrap = document.createElement('div'); palWrap.className = 'pal';
@@ -105,7 +106,7 @@ const sw = palWrap.querySelector<HTMLElement>('.swatches')!, palName = palWrap.q
 const swBtns = Object.entries(PALETTES).map(([id, pal]) => {
   const b = document.createElement('button'); b.className = 'sw1'; b.title = pal.name; b.setAttribute('aria-label', pal.name);
   b.style.background = 'linear-gradient(90deg,' + pal.c.join(',') + ')';
-  b.onclick = () => { p.palette = id; touched(); refreshAll(); }; sw.appendChild(b); return [id, b] as const;
+  b.onclick = () => { sound.tick(); p.palette = id; touched(); refreshAll(); }; sw.appendChild(b); return [id, b] as const;
 });
 sCol.appendChild(palWrap);
 const cols = document.createElement('div'); cols.className = 'colors';
@@ -183,14 +184,14 @@ expBtn.onclick = async () => {
       const v = src.el as HTMLVideoElement; abort = new AbortController();
       prog.hidden = false; cancelBtn.hidden = false; prog.value = 0;
       const blob = await exportVideo(v, p, edge, f => { prog.value = f; msg.textContent = 'Rendering frames… ' + Math.round(f * 100) + '%'; }, abort.signal);
-      download(blob, name + '.mp4'); msg.textContent = 'Saved MP4 (' + (blob.size / 1048576).toFixed(1) + ' MB).';
+      download(blob, name + '.mp4'); msg.textContent = 'Saved MP4 (' + (blob.size / 1048576).toFixed(1) + ' MB).'; sound.done();
     } else {
       const { blob, ext } = await exportImage(src.el, src.w, src.h, { ...p, transparent: trIn.checked }, edge, fmt as 'jpeg' | 'webp', p.animate || src.kind === 'video' ? clock : 0);
-      download(blob, name + '.' + ext); msg.textContent = 'Saved ' + (ext === 'webp' ? 'WebP' : ext.toUpperCase()) + ' (' + Math.round(blob.size / 1024) + ' KB).';
+      download(blob, name + '.' + ext); msg.textContent = 'Saved ' + (ext === 'webp' ? 'WebP' : ext.toUpperCase()) + ' (' + Math.round(blob.size / 1024) + ' KB).'; sound.done();
     }
   } catch (e) {
     const aborted = (e as Error).name === 'AbortError';
-    msg.textContent = aborted ? 'Cancelled.' : 'Export failed: ' + (e as Error).message; msg.classList.toggle('err', !aborted);
+    msg.textContent = aborted ? 'Cancelled.' : 'Export failed: ' + (e as Error).message; msg.classList.toggle('err', !aborted); if (!aborted) sound.fail();
   } finally { expBtn.disabled = false; cancelBtn.hidden = true; prog.hidden = true; abort = null; markDirty(); }
 };
 
@@ -200,7 +201,7 @@ function refreshAll() { refreshers.forEach(f => f()); metaRefreshers.forEach(f =
 const presetCards = PRESETS.map(pr => {
   const b = document.createElement('button'); b.className = 'preset'; b.title = pr.name;
   b.innerHTML = '<canvas width="120" height="96" aria-hidden="true"></canvas><span>' + pr.name + '</span>';
-  b.onclick = () => { p = applyPreset(p, pr.id); activePreset = pr.id; refreshAll(); syncPresetUI(); markDirty(); revealPreset(true); };
+  b.onclick = () => { sound.tick(); p = applyPreset(p, pr.id); activePreset = pr.id; refreshAll(); syncPresetUI(); markDirty(); revealPreset(true); };
   presetsEl.appendChild(b); return { pr, b, c: b.querySelector('canvas')! };
 });
 function syncPresetUI() {
@@ -254,7 +255,7 @@ function setSource(el: SourceEl, w: number, h: number, kind: 'image' | 'video') 
   transport.hidden = kind !== 'video'; app.classList.toggle('is-video', kind === 'video');
   syncSlug();
   $('stripNote').textContent = kind === 'video' ? 'Your video in every preset.' : 'Your picture in every preset.';
-  fillFormats(); syncExportState(); syncPresetUI(); renderThumbs(); markDirty();
+  fillFormats(); syncExportState(); syncPresetUI(); renderThumbs(); markDirty(); sound.load();
 }
 function loadSample(i: number) { const c = getSample(i); srcName = SAMPLES[i % SAMPLES.length].id + '.png'; setSource(c, c.width, c.height, 'image'); }
 /** Opens a picture or a video from a URL: a dropped file (blob URL) or a Library work (same-origin file). */
@@ -393,3 +394,12 @@ document.addEventListener('click', e => { if (menu.open && !menu.contains(e.targ
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.open) { menu.open = false; menu.querySelector('summary')!.focus(); } });
 // Leaving the page drops the picture and every setting, so ask first once there is work to lose.
 window.addEventListener('beforeunload', e => { if (src) { e.preventDefault(); e.returnValue = ''; } });
+
+/* ---------- interface sound (off by default) ---------- */
+const soundBtn = $<HTMLButtonElement>('soundBtn'), soundTxt = $('soundTxt'), soundWave = document.getElementById('soundWave')!;
+function syncSound() {
+  const o = sound.enabled; soundBtn.setAttribute('aria-pressed', String(o)); soundTxt.textContent = o ? 'Sound on' : 'Sound off'; soundBtn.setAttribute('aria-label', o ? 'Interface sounds: on' : 'Interface sounds: off');
+  soundWave.style.display = o ? '' : 'none';
+}
+soundBtn.onclick = () => { sound.set(!sound.enabled); syncSound(); };
+syncSound();

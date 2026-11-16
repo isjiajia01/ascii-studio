@@ -557,3 +557,6 @@ select:disabled{opacity:.45;cursor:default}
   .facts li{gap:6px}
   .btn.lg{padding:0 18px}
 }
+
+/* Sound toggle: icon only on phones so the file name keeps its room (the button keeps its accessible name via aria-label) */
+@media (max-width:720px){#soundTxt{display:none}#soundBtn{padding:0 11px}}
