@@ -1,4 +1,5 @@
 import { buildAtlas } from './glyphs';
+import { blueNoise, BLUE_N } from './bluenoise';
 import { STYLES, PALETTES, type Params } from './styles';
 import { VERT, ASCII_FRAG, POST_FRAG } from './shaders';
 
@@ -34,7 +35,7 @@ class Prog {
 export class Renderer {
   canvas: HTMLCanvasElement; gl: WebGL2RenderingContext;
   private A!: Prog; private P!: Prog;
-  private srcTex!: WebGLTexture; private atlasTex!: WebGLTexture; private fboTex!: WebGLTexture; private fbo!: WebGLFramebuffer;
+  private srcTex!: WebGLTexture; private atlasTex!: WebGLTexture; private blueTex!: WebGLTexture; private fboTex!: WebGLTexture; private fbo!: WebGLFramebuffer;
   private lastRender: [Params, number, number, number] | null = null;
   private textureLimit = 4096; private outputLimit = 4096;
   private lost = false; private uploaded = false; private videoTime = -1;
@@ -84,6 +85,15 @@ export class Renderer {
     gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     this.fbo = gl.createFramebuffer()!;
+    const nearest = (t: WebGLTexture, unit: number) => {
+      gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+      gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    };
+    this.blueTex = gl.createTexture()!; nearest(this.blueTex, 2);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, BLUE_N, BLUE_N, 0, gl.RED, gl.UNSIGNED_BYTE, blueNoise());
+    this.atlasKey = '';
   }
 
   setSource(el: SourceEl, w: number, h: number) {
@@ -167,7 +177,8 @@ export class Renderer {
     const A = this.A; gl.useProgram(A.p);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, this.srcTex);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, this.atlasTex);
-    A.i('uSrc', 0); A.i('uAtlas', 1);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, this.blueTex);
+    A.i('uSrc', 0); A.i('uAtlas', 1); A.i('uBlue', 2);
     A.v2('uRes', w, h); A.v2('uCell', cellW, cellH); A.v2('uSrcSize', this.uploadW, this.uploadH);
     A.i('uMode', st.mode); A.i('uGlyphs', this.atlasCount); A.f('uTiles', this.atlasCount + 4);
     A.i('uColorMode', p.colorMode === 'source' ? 1 : p.colorMode === 'palette' ? 2 : 0);
@@ -197,7 +208,7 @@ export class Renderer {
     const gl = this.gl;
     this.canvas.removeEventListener('webglcontextlost', this.onLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onRestored);
-    gl.deleteTexture(this.srcTex); gl.deleteTexture(this.atlasTex); gl.deleteTexture(this.fboTex);
+    gl.deleteTexture(this.srcTex); gl.deleteTexture(this.atlasTex); gl.deleteTexture(this.fboTex); gl.deleteTexture(this.blueTex);
     gl.deleteFramebuffer(this.fbo); gl.deleteProgram(this.A.p); gl.deleteProgram(this.P.p);
     this.src = null; this.staging = null; this.lastRender = null;
     gl.getExtension('WEBGL_lose_context')?.loseContext();

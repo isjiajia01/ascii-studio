@@ -11,6 +11,7 @@ uniform vec2 uRes, uCell, uSrcSize;
 uniform int uMode, uGlyphs, uColorMode;
 uniform float uTiles, uTone, uShade, uRandom, uTileBg;
 uniform vec3 uFg, uBg, uP0, uP1, uP2;
+uniform sampler2D uBlue;
 uniform float uBgAlpha, uContrast, uBright, uInvert, uEdge, uTime, uRain;
 out vec4 o;
 
@@ -18,6 +19,8 @@ float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fr
 float lum(vec3 c){ return dot(c, vec3(.299,.587,.114)); }
 const float BAYER[16] = float[16](0.,8.,2.,10., 12.,4.,14.,6., 3.,11.,1.,9., 15.,7.,13.,5.);
 float bayer(vec2 p){ ivec2 q=ivec2(mod(p,4.)); return (BAYER[q.x+q.y*4]+.5)/16.; }
+// Static 64x64 blue-noise tile: smoother gradients than Bayer for one-bit modes. Braille keeps Bayer (its regular lattice is part of the look).
+float thr(vec2 p){ return texelFetch(uBlue, ivec2(mod(p,64.)), 0).r*(256./255.); }
 const vec3 LEGO[10] = vec3[10](vec3(.96,.96,.94),vec3(.1,.1,.11),vec3(.77,.1,.1),vec3(.96,.46,.13),vec3(.98,.82,.14),vec3(.2,.6,.25),vec3(.1,.35,.75),vec3(.45,.27,.6),vec3(.55,.35,.2),vec3(.6,.6,.62));
 
 vec3 samp(vec2 uvTop, float lod){ return textureLod(uSrc, vec2(uvTop.x, 1.-uvTop.y), lod).rgb; }
@@ -90,7 +93,7 @@ void main(){
       cov = l<=0. ? 0. : 1.-smoothstep(r-aa,r+aa,d); col = baseColor(c,l);
     }
     else if(uMode==2){ // dither
-      float on = l>bayer(cell) ? 1.:0.;
+      float on = l>thr(cell) ? 1.:0.;
       vec3 b = uColorMode==1 ? c/max(max(c.r,max(c.g,c.b)),.02) : baseColor(c,l);
       col=b; cov=on;
     }
@@ -134,7 +137,7 @@ void main(){
       vec2 fl=vec2(sin(cell.y*.12+uTime*.8),cos(cell.x*.1+uTime*.7))*3.+vec2(uTime*2.,0.);
       vec2 sc=(floor(cell+fl)+.5)*uCell/uRes; sc=fract(sc);
       vec3 c2=adj(samp(sc,lod0)); float l2=lum(c2);
-      float on=l2>bayer(cell+floor(uTime*3.))?1.:0.;
+      float on=l2>thr(cell+floor(uTime*3.))?1.:0.;
       vec3 b = uColorMode==1 ? c2/max(max(c2.r,max(c2.g,c2.b)),.02) : baseColor(c2,l2);
       col=b; cov=on;
     }
