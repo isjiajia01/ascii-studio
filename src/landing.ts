@@ -1,4 +1,4 @@
-import './cursor'; import './motion'; import './damp';
+import './cursor'; import './motion';
 import { Renderer, fitSize } from './engine/renderer';
 import { PRESETS, STYLES, applyPreset, DEFAULTS, type Params } from './engine/styles';
 import { getSample, SAMPLES } from './engine/samples';
