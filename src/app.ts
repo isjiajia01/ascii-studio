@@ -365,6 +365,8 @@ const qs = q.get('style'); if (qs && qs in STYLES) { p.style = qs as Params['sty
 // Library deep link (?work=<id>): the work's own file with its settings. A tuned work marks no preset as chosen.
 const work = findWork(q.get('work'));
 if (work) { p = workParams(work); activePreset = work.tweak ? null : work.preset; }
+// An explicit ?preset= on top of ?work= restyles the work (the landing page's "Try this look" links use it).
+if (work && qp && PRESETS.some(x => x.id === qp)) { p = applyPreset(p, qp); activePreset = qp; }
 refreshAll(); syncPresetUI(); fillFormats(); syncExportState();
 if (renderer && !q.has('sample') && !work) renderThumbs();
 if (renderer && work) { srcName = work.file; openMedia(workUrl(work), work.kind === 'video').catch(() => { renderThumbs(); msg.textContent = 'Could not load ' + work.file + '.'; }); }

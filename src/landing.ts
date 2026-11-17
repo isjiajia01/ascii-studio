@@ -1,13 +1,14 @@
 import './cursor'; import './motion';
 import { Renderer, fitSize } from './engine/renderer';
 import { PRESETS, STYLES, applyPreset, DEFAULTS, type Params } from './engine/styles';
-import { getSample, SAMPLES } from './engine/samples';
+import { getSample } from './engine/samples';
+import { findWork, workUrl } from './works';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-/** The landing proofs use the balloon: bright subject, dark sky, readable in every style. */
-const SI = Math.max(0, SAMPLES.findIndex(s => s.id === 'balloon'));
-const SNAME = SAMPLES[SI].id + '.png';
+/** The landing proofs use the Carpathian lynx (CC0, see the Library): bright face, dark ground, readable in every style. */
+const SNAME = 'lynx.jpg';
+const SRC = findWork('lynx')!;
 
 /* mobile section menu: close after a pick or a tap outside */
 const menu = document.getElementById('menu') as HTMLDetailsElement | null;
@@ -18,7 +19,17 @@ if (menu) {
 }
 
 if (!Renderer.supported()) { document.body.classList.add('no-gl'); }
-else init();
+else {
+  // The picture is a real file, so the page waits for it; if it cannot load, the built-in balloon keeps the page alive.
+  const img = new Image(); img.decoding = 'async';
+  const go = (pic: HTMLCanvasElement) => init(pic);
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+    c.getContext('2d')!.drawImage(img, 0, 0); go(c);
+  };
+  img.onerror = () => go(getSample(3));
+  img.src = workUrl(SRC);
+}
 
 /** Before/after split: pointer drag (hover-scrub with a mouse) plus arrow keys. */
 function bindCmp(el: HTMLElement, start: number) {
@@ -39,7 +50,7 @@ function bindCmp(el: HTMLElement, start: number) {
   return put;
 }
 
-function init() {
+function init(pic: HTMLCanvasElement) {
   const shared = new Renderer();
   const draw = (dst: HTMLCanvasElement, src: HTMLCanvasElement, p: Params, long: number, t = 0) => {
     shared.setSource(src, src.width, src.height);
@@ -50,19 +61,18 @@ function init() {
   const drawOrig = (dst: HTMLCanvasElement, src: HTMLCanvasElement, long: number) => {
     const [w, h] = fitSize(src.width / src.height, long); dst.width = w; dst.height = h; dst.getContext('2d')!.drawImage(src, 0, 0, w, h);
   };
-  const pic = getSample(SI);
   /** Small proofs (phones) get fewer, larger cells so the marks stay readable: about one cell per 6 CSS px. */
-  const fitDetail = (d: number, el: HTMLElement) => Math.max(40, Math.min(d, Math.round(el.clientWidth / 6)));
+  const fitDetail = (d: number, el: HTMLElement) => Math.max(40, Math.min(d, Math.round(el.clientWidth / 4.5)));
   /** Proofs on the landing page are seen large, so cells are kept big enough to read as type. */
   const proofParams = (id: string) => {
-    const q = applyPreset(DEFAULTS, id); q.detail = Math.round(q.detail * 0.72);
+    const q = applyPreset(DEFAULTS, id); q.detail = Math.round(q.detail * 1.0);
     // Long glyph ramps pick up the faint sky gradient as rows of marks; a touch more contrast keeps the sky clean.
-    if (q.style === 'detailed') { q.contrast = 1.4; q.brightness = -0.08; }
+    if (q.style === 'detailed') { q.contrast = 1.15; q.brightness = 0.12; }
     return q;
   };
 
   /* hero: its own context, animated. The one orchestrated moment: the proof "develops" from original to type,
-     stopping with the output over most of the picture and the divider clear of the balloon. */
+     stopping with the output over most of the picture and the divider clear of the face. */
   const heroOut = $<HTMLCanvasElement>('heroOut'), heroOrig = $<HTMLCanvasElement>('heroOrig'), heroCmp = $('heroCmp');
   const hero = new Renderer(heroOut);
   hero.setSource(pic, pic.width, pic.height);
@@ -77,8 +87,8 @@ function init() {
     };
     requestAnimationFrame(sweep);
   }
-  const heroIds = ['detailed', 'poster', 'bricks', 'monitor', 'swarm'];
-  let cur = proofParams('detailed');
+  const heroIds = ['poster', 'detailed', 'bricks', 'monitor', 'swarm'];
+  let cur = proofParams('poster');
   const pills = $('heroPills'), heroSlug = $('heroSlug');
   const pickHero = (id: string, b: HTMLElement) => {
     const pr = PRESETS.find(x => x.id === id)!;
@@ -86,9 +96,9 @@ function init() {
     pills.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     heroSlug.innerHTML = '<b>' + pr.name + '</b> · ' + STYLES[cur.style].name.toLowerCase() + ' · ' + SNAME;
   };
-  // A phone-sized plate has too few cells for Detailed colour to keep the balloon's stripes; halftone dots carry the
+  // A phone-sized plate has too few cells for Detailed colour to keep the fur detail; halftone dots carry the
   // colour at any size, so small plates open on Poster halftone (the chips keep their order).
-  const firstHero = heroCmp.clientWidth < 560 ? 'poster' : 'detailed';
+  const firstHero = 'poster';
   heroIds.forEach(id => {
     const pr = PRESETS.find(x => x.id === id)!; const b = document.createElement('button'); b.className = 'chip'; b.textContent = pr.name;
     b.onclick = () => pickHero(id, b);
@@ -106,13 +116,13 @@ function init() {
   };
   requestAnimationFrame(loop);
 
-  /* how it works: three frames of one contact sheet: the original, the same balloon in three styles, the finished file */
+  /* how it works: three frames of one contact sheet: the original, the same lynx in three styles, the finished file */
   const s1 = $<HTMLCanvasElement>('step1'), s2 = $<HTMLCanvasElement>('step2'), s3 = $<HTMLCanvasElement>('step3');
   drawOrig(s1, pic, 720);
-  // Step 2 is three whole balloons side by side (letters, dither, bricks), each a portrait crop centred on the main balloon.
+  // Step 2 is three portrait crops side by side (letters, dither, bricks), each centred on the face.
   // Presets with their own paper colour are used so each tile reads as a separate print on the dark frame.
   const tiles = ['blueprint', 'gameboy', 'bricks'].map(id => { const c = document.createElement('canvas'); draw(c, pic, proofParams(id), 720); return c; });
-  const BX = 390 / 1000; // the main balloon's centre, as a share of the sample's width
+  const BX = 0.55; // the lynx's face centre, as a share of the picture's width
   const drawTiles = () => {
     const fr = s2.parentElement!, ar = fr.clientWidth / Math.max(1, fr.clientHeight) || 1.5;
     const W = 960, H = Math.round(W / ar), g = Math.round(W * 0.025);
@@ -154,7 +164,7 @@ function init() {
     draw(specOut, pic, q, 1000, 1.3);
     specName.textContent = it.name;
     specDesc.textContent = it.id === 'monitor' ? 'Phosphor green, scanlines and curved glass.' : STYLES[it.style as keyof typeof STYLES].desc;
-    specTry.href = './app/?preset=' + it.id + '&sample=' + SI;
+    specTry.href = './app/?work=lynx&preset=' + it.id;
     specTry.textContent = 'Open ' + it.name + ' in the generator';
     // Stacked layout: the index sits under the proof, so a pick made after scrolling brings the proof back into view.
     if (user && stacked.matches) {
