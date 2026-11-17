@@ -14,7 +14,7 @@ if (fine.matches) {
 
   const frame = () => {
     // Easing toward the pointer is the "lag"; reduced motion follows instantly.
-    const k = still.matches ? 1 : 0.16;
+    const k = still.matches ? 1 : 0.12;
     rx += (x - rx) * k; ry += (y - ry) * k;
     dot.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
     ring.style.transform = 'translate3d(' + rx + 'px,' + ry + 'px,0)';

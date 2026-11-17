@@ -11,7 +11,7 @@ if (!matchMedia('(prefers-reduced-motion:reduce)').matches && matchMedia('(hover
     return false;
   };
   const step = () => {
-    cur += (target - cur) * 0.12;
+    cur += (target - cur) * 0.09;
     if (Math.abs(target - cur) < 0.5) { cur = target; raf = 0; } else raf = requestAnimationFrame(step);
     el.scrollTo({ top: cur, behavior: 'instant' });
   };
