@@ -6,9 +6,9 @@ import { findWork, workUrl } from './works';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-/** The landing proofs use the Carpathian lynx (CC0, see the Library): bright face, dark ground, readable in every style. */
-const SNAME = 'lynx.jpg';
-const SRC = findWork('lynx')!;
+/** The landing proofs use Vermeer's Girl with a Pearl Earring (public domain, see the Library): bright face, black ground, readable in every style. */
+const SNAME = 'pearl.jpg';
+const SRC = findWork('pearl')!;
 
 /* mobile section menu: close after a pick or a tap outside */
 const menu = document.getElementById('menu') as HTMLDetailsElement | null;
@@ -24,8 +24,10 @@ else {
   const img = new Image(); img.decoding = 'async';
   const go = (pic: HTMLCanvasElement) => init(pic);
   img.onload = () => {
-    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
-    c.getContext('2d')!.drawImage(img, 0, 0); go(c);
+    // The painting is a portrait; the proof plate is landscape (5:4). Crop from the turban to the collar, full width.
+    const W = img.naturalWidth, H = Math.round(W * 0.8), y = Math.min(img.naturalHeight - H, Math.round(img.naturalHeight * 0.08));
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    c.getContext('2d')!.drawImage(img, 0, y, W, H, 0, 0, W, H); go(c);
   };
   img.onerror = () => go(getSample(3));
   img.src = workUrl(SRC);
@@ -96,7 +98,7 @@ function init(pic: HTMLCanvasElement) {
     pills.querySelectorAll('.chip').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     heroSlug.innerHTML = '<b>' + pr.name + '</b> · ' + STYLES[cur.style].name.toLowerCase() + ' · ' + SNAME;
   };
-  // A phone-sized plate has too few cells for Detailed colour to keep the fur detail; halftone dots carry the
+  // A phone-sized plate has too few cells for Detailed colour to keep the skin and cloth detail; halftone dots carry the
   // colour at any size, so small plates open on Poster halftone (the chips keep their order).
   const firstHero = 'poster';
   heroIds.forEach(id => {
@@ -116,13 +118,13 @@ function init(pic: HTMLCanvasElement) {
   };
   requestAnimationFrame(loop);
 
-  /* how it works: three frames of one contact sheet: the original, the same lynx in three styles, the finished file */
+  /* how it works: three frames of one contact sheet: the original, the same painting in three styles, the finished file */
   const s1 = $<HTMLCanvasElement>('step1'), s2 = $<HTMLCanvasElement>('step2'), s3 = $<HTMLCanvasElement>('step3');
   drawOrig(s1, pic, 720);
   // Step 2 is three portrait crops side by side (letters, dither, bricks), each centred on the face.
   // Presets with their own paper colour are used so each tile reads as a separate print on the dark frame.
   const tiles = ['blueprint', 'gameboy', 'bricks'].map(id => { const c = document.createElement('canvas'); draw(c, pic, proofParams(id), 720); return c; });
-  const BX = 0.55; // the lynx's face centre, as a share of the picture's width
+  const BX = 0.45; // the girl's face centre, as a share of the picture's width
   const drawTiles = () => {
     const fr = s2.parentElement!, ar = fr.clientWidth / Math.max(1, fr.clientHeight) || 1.5;
     const W = 960, H = Math.round(W / ar), g = Math.round(W * 0.025);
@@ -164,7 +166,7 @@ function init(pic: HTMLCanvasElement) {
     draw(specOut, pic, q, 1000, 1.3);
     specName.textContent = it.name;
     specDesc.textContent = it.id === 'monitor' ? 'Phosphor green, scanlines and curved glass.' : STYLES[it.style as keyof typeof STYLES].desc;
-    specTry.href = './app/?work=lynx&preset=' + it.id;
+    specTry.href = './app/?work=pearl&preset=' + it.id;
     specTry.textContent = 'Open ' + it.name + ' in the generator';
     // Stacked layout: the index sits under the proof, so a pick made after scrolling brings the proof back into view.
     if (user && stacked.matches) {
