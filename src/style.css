@@ -206,6 +206,11 @@ footer .wrap{display:flex;align-items:baseline;gap:var(--s3) var(--s6);flex-wrap
 .foot-links a{color:var(--paper-2);text-decoration:none}.foot-links a:hover{color:var(--paper);text-decoration:underline}
 .foot-credit{margin-left:auto}
 footer .foot-credit a{color:var(--paper-2)}
+/* ASCII wordmark (public/ascii-footer.js draws the name from characters; hover scrambles them) */
+.foot-mark{width:min(1320px,100% - 48px);margin:0 auto;padding:var(--s5) 0 var(--s6);position:relative}
+.foot-mark a{display:block;font:800 clamp(56px,15vw,220px)/.92 var(--font);color:var(--paper-3);text-decoration:none;white-space:nowrap}
+.foot-mark a.is-ascii{font-size:0;line-height:0}
+.foot-mark canvas{display:block;width:100%;touch-action:pan-y}
 
 /* ---------- library: a wall of finished proofs, one on the light table at a time ---------- */
 .nav .links a[aria-current=page],.menu-pop a[aria-current=page]{color:var(--paper);text-decoration:underline;text-decoration-color:var(--paper-3);text-underline-offset:6px}
